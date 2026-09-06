@@ -331,9 +331,9 @@ function downloads.start_add_with_online_fix(appid, manifest_url, api_name, inst
             return { success = false, error = "Manifesto não encontrado para este jogo em nenhuma das APIs ativas" }
         end
     end
-    api_name = api_name or "AdvgameTool"
+    api_name = api_name or "ManifestAdvTools"
 
-    logger.log("AdvgameTool: Bundle download appid=" .. tostring(appid) .. " manifest=" .. tostring(manifest_url))
+    logger.log("ManifestAdvTools: Bundle download appid=" .. tostring(appid) .. " manifest=" .. tostring(manifest_url))
     _set_download_state(appid, { status = "downloading", currentApi = api_name, isBundleDownload = true })
 
     local dest_root   = utils.ensure_temp_download_dir()
@@ -363,18 +363,18 @@ function downloads.start_add_with_online_fix(appid, manifest_url, api_name, inst
         )
         local ok, res = pcall(_launch_async_download_with_fix, appid, manifest_url, fix_url, dest_path, extract_dir, fix_install)
         if not ok then
-            logger.warn("AdvgameTool: Bundle download failed to start - " .. tostring(res))
+            logger.warn("ManifestAdvTools: Bundle download failed to start - " .. tostring(res))
             _set_download_state(appid, { status = "failed", error = tostring(res) })
             return { success = false, error = tostring(res) }
         end
         return { success = true, isBundleDownload = true, fixUrl = fix_url }
     else
         -- OnlineFix not available for this appid: install manifest and set fix state to not_available
-        logger.log("AdvgameTool: OnlineFix not available for " .. tostring(appid) .. ", proceeding with manifest-only")
+        logger.log("ManifestAdvTools: OnlineFix not available for " .. tostring(appid) .. ", proceeding with manifest-only")
         m_utils.write_file(fix_state_file, '{"status":"not_available"}')
         local ok, res = pcall(_launch_async_download, appid, manifest_url, dest_path, extract_dir)
         if not ok then
-            logger.warn("AdvgameTool: Manifest download failed - " .. tostring(res))
+            logger.warn("ManifestAdvTools: Manifest download failed - " .. tostring(res))
             _set_download_state(appid, { status = "failed", error = tostring(res) })
             return { success = false, error = tostring(res) }
         end
@@ -393,9 +393,9 @@ function downloads.start_add_via_luatools_from_url(appid, url, apiName)
             return { success = false, error = "Manifesto não encontrado para este jogo em nenhuma das APIs ativas" }
         end
     end
-    apiName = apiName or "AdvgameTool"
+    apiName = apiName or "ManifestAdvTools"
 
-    logger.log("AdvgameTool: StartAddViaLuaToolsFromUrl appid=" .. tostring(appid) .. " api=" .. tostring(apiName))
+    logger.log("ManifestAdvTools: StartAddViaLuaToolsFromUrl appid=" .. tostring(appid) .. " api=" .. tostring(apiName))
     _set_download_state(appid, { status = "downloading", currentApi = apiName, bytesRead = 0, totalBytes = 0 })
 
     local ok, res = pcall(function()
@@ -406,7 +406,7 @@ function downloads.start_add_via_luatools_from_url(appid, url, apiName)
     end)
 
     if not ok then
-        logger.warn("AdvgameTool: Async Download crashed - " .. tostring(res))
+        logger.warn("ManifestAdvTools: Async Download crashed - " .. tostring(res))
         _set_download_state(appid, { status = "failed", error = tostring(res) })
         return { success = false, error = tostring(res) }
     end
@@ -418,7 +418,7 @@ function downloads.start_add_via_luatools(appid)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = false, error = "Invalid appid" } end
 
-    logger.log("AdvgameTool: StartAddViaLuaTools appid=" .. tostring(appid))
+    logger.log("ManifestAdvTools: StartAddViaLuaTools appid=" .. tostring(appid))
     _set_download_state(appid, { status = "queued", bytesRead = 0, totalBytes = 0 })
 
     local apis = api_manifest.load_api_manifest()
@@ -487,7 +487,7 @@ function downloads.start_add_via_luatools(appid)
     end)
 
     if not ok then
-        logger.warn("AdvgameTool: start_add_via_luatools crashed - " .. tostring(res))
+        logger.warn("ManifestAdvTools: start_add_via_luatools crashed - " .. tostring(res))
         _set_download_state(appid, { status = "failed", error = tostring(res) })
         return { success = false, error = tostring(res) }
     end

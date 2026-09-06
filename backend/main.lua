@@ -335,7 +335,7 @@ end
 function GetIconDataUrl()
     local icon_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.png")
     if not fs.exists(icon_path) then
-        icon_path = fs.join(paths.get_plugin_dir(), "public", "advgametool-icon.png")
+        icon_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.png")
     end
     if not fs.exists(icon_path) then
         icon_path = fs.join(paths.get_plugin_dir(), "public", "luatools-icon.png")
