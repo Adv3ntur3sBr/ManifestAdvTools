@@ -2,7 +2,7 @@
     .SYNOPSIS
     Instalador Oficial Automatizado do ManifestAdvTools para Steam
     .DESCRIPTION
-    Instalação direta e infalível: Steamtools + Millennium v3 + ManifestAdvTools
+    Instalação direta: Steamtools + Millennium v3 + ManifestAdvTools
 #>
 
 $ErrorActionPreference = "Stop"
@@ -22,191 +22,136 @@ function Write-Success {
     param([string]$Msg)
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host "[$ts] " -ForegroundColor Cyan -NoNewline
-    Write-Host "OK $Msg" -ForegroundColor Green
+    Write-Host "OK " -ForegroundColor Green -NoNewline
+    Write-Host $Msg -ForegroundColor White
 }
 
-function Write-Warn {
+function Write-Err {
     param([string]$Msg)
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host "[$ts] " -ForegroundColor Cyan -NoNewline
-    Write-Host "WARN $Msg" -ForegroundColor Yellow
-}
-
-function Write-Fail {
-    param([string]$Msg)
-    $ts = Get-Date -Format "HH:mm:ss"
-    Write-Host "[$ts] " -ForegroundColor Cyan -NoNewline
-    Write-Host "ERR $Msg" -ForegroundColor Red
-}
-
-function Download-And-Extract {
-    param(
-        [string]$Url,
-        [string]$DestFolder,
-        [string]$Name
-    )
-
-    $tempZip = Join-Path $env:TEMP "$Name-temp.zip"
-    if (Test-Path $tempZip) { Remove-Item $tempZip -Force -ErrorAction SilentlyContinue }
-
-    Write-Step "Baixando $Name..."
-    $wc = New-Object System.Net.WebClient
-    $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ManifestAdvTools")
-    $wc.DownloadFile($Url, $tempZip)
-
-    if (-not (Test-Path $tempZip)) {
-        throw "Falha ao baixar $Name ($Url)"
-    }
-
-    Write-Step "Extraindo $Name em $DestFolder..."
-    if (-not (Test-Path $DestFolder)) {
-        New-Item -Path $DestFolder -ItemType Directory -Force | Out-Null
-    }
-
-    Expand-Archive -Path $tempZip -DestinationPath $DestFolder -Force
-    Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
-    Write-Success "$Name instalado com sucesso!"
+    Write-Host "ERRO: " -ForegroundColor Red -NoNewline
+    Write-Host $Msg -ForegroundColor Red
 }
 
 Clear-Host
 Write-Host "=========================================================" -ForegroundColor Magenta
-Write-Host "       MANIFESTADVTOOLS — INSTALADOR AUTOMATIZADO        " -ForegroundColor White
+Write-Host "       MANIFESTADVTOOLS - INSTALADOR AUTOMATIZADO        " -ForegroundColor White
 Write-Host "=========================================================" -ForegroundColor Magenta
 
-# 1. Localizar Steam
+# 1. Localizar pasta do Steam
 Write-Step "Localizando diretório do Steam..."
 $SteamPath = $null
+try {
+    $SteamPath = (Get-ItemProperty -Path "HKCU:\Software\Valve\Steam" -Name "SteamPath" -ErrorAction SilentlyContinue).SteamPath
+} catch {}
 
-$registries = @(
-    "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam",
-    "HKLM:\SOFTWARE\Valve\Steam",
-    "HKCU:\SOFTWARE\Valve\Steam"
-)
-
-foreach ($reg in $registries) {
-    if (Test-Path $reg) {
-        $val = (Get-ItemProperty -Path $reg -Name "InstallPath" -ErrorAction SilentlyContinue).InstallPath
-        if (-not $val) {
-            $val = (Get-ItemProperty -Path $reg -Name "SteamPath" -ErrorAction SilentlyContinue).SteamPath
-        }
-        if ($val -and (Test-Path $val) -and (Test-Path (Join-Path $val "steam.exe"))) {
-            $SteamPath = $val
-            break
-        }
-    }
+if (-not $SteamPath -or -not (Test-Path $SteamPath)) {
+    try {
+        $SteamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -Name "InstallPath" -ErrorAction SilentlyContinue).InstallPath
+    } catch {}
 }
 
-if (-not $SteamPath) {
-    if (Test-Path "C:\Program Files (x86)\Steam\steam.exe") {
+if (-not $SteamPath -or -not (Test-Path $SteamPath)) {
+    if (Test-Path "C:\Program Files (x86)\Steam") {
         $SteamPath = "C:\Program Files (x86)\Steam"
-    } elseif (Test-Path "C:\Steam\steam.exe") {
+    } elseif (Test-Path "C:\Steam") {
         $SteamPath = "C:\Steam"
     }
 }
 
-if (-not $SteamPath) {
-    Write-Fail "Steam não encontrada no registro."
-    $SteamPath = Read-Host "Digite o caminho completo da sua pasta da Steam (ex: C:\Program Files (x86)\Steam)"
-    if (-not (Test-Path (Join-Path $SteamPath "steam.exe"))) {
-        Write-Fail "Caminho inválido ou steam.exe ausente. Abortando."
-        exit 1
-    }
+if (-not $SteamPath -or -not (Test-Path $SteamPath)) {
+    Write-Err "Steam não encontrada no registro nem nos diretórios padrão."
+    exit 1
 }
 
 $SteamPath = $SteamPath.Replace('/', '\')
 Write-Success "Steam detectada em: $SteamPath"
 
-# 2. Finalizar Steam
+# 2. Encerrar processos da Steam
 Write-Step "Encerrando processos da Steam para aplicar os arquivos..."
-while (Get-Process -Name "steam", "steamwebhelper" -ErrorAction SilentlyContinue) {
-    Stop-Process -Name "steam", "steamwebhelper" -Force -ErrorAction SilentlyContinue
+while (Get-Process -Name "steam", "steamwebhelper", "millennium*" -ErrorAction SilentlyContinue) {
+    Stop-Process -Name "steam", "steamwebhelper", "millennium*" -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 }
 Write-Success "Processos da Steam encerrados."
 
-# 3. Instalar Steamtools (ost.zip -> dwmapi.dll e xinput1_4.dll)
+# 3. Instalar Steamtools
 Write-Step "Verificando Steamtools (desbloqueador de manifestos)..."
-$OstUrl = "https://github.com/madoiscool/lt_api_links/releases/download/ost-148/ost.zip"
-try {
-    Download-And-Extract -Url $OstUrl -DestFolder $SteamPath -Name "Steamtools"
-} catch {
-    Write-Warn "Aviso ao instalar Steamtools: $_. Continuando..."
-}
+$SteamtoolsUrl = "https://github.com/madoiscool/lt_api_links/releases/download/ost-148/ost.zip"
+$SteamtoolsZip = Join-Path $SteamPath "steamtools_temp.zip"
 
-# 4. Instalar Millennium v3 diretamente (wsock32.dll + millennium/lib/millennium.dll)
+Write-Step "Baixando Steamtools..."
+Invoke-WebRequest -Uri $SteamtoolsUrl -OutFile $SteamtoolsZip -TimeoutSec 60
+Write-Step "Extraindo Steamtools em $SteamPath..."
+Expand-Archive -Path $SteamtoolsZip -DestinationPath $SteamPath -Force
+Remove-Item $SteamtoolsZip -Force -ErrorAction SilentlyContinue
+Write-Success "Steamtools instalado com sucesso!"
+
+# 4. Instalar Millennium v3
 Write-Step "Instalando Millennium v3..."
-$MillenniumZipUrl = "https://github.com/SteamClientHomebrew/Millennium/releases/download/v3.4.1/millennium-v3.4.1-windows-x86_64.zip"
+$MillenniumUrl = "https://github.com/SteamClientHomebrew/Millennium/releases/download/v3.4.1/millennium-v3.4.1-windows-x86_64.zip"
+$MillenniumZip = Join-Path $SteamPath "millennium_temp.zip"
 
-# Tentar resolver a versão mais recente via GitHub API
-try {
-    $ghResp = Invoke-RestMethod -Uri "https://api.github.com/repos/SteamClientHomebrew/Millennium/releases/latest" -Headers @{ "User-Agent" = "ManifestAdvTools" } -TimeoutSec 10
-    foreach ($asset in $ghResp.assets) {
-        if ($asset.name -match "windows-x86_64\.zip$") {
-            $MillenniumZipUrl = $asset.browser_download_url
-            break
-        }
-    }
-} catch {
-    Write-Warn "Usando espelho de versão fixa do Millennium v3.4.1..."
+Write-Step "Baixando Millennium v3..."
+Invoke-WebRequest -Uri $MillenniumUrl -OutFile $MillenniumZip -TimeoutSec 60
+Write-Step "Extraindo Millennium v3 em $SteamPath..."
+Expand-Archive -Path $MillenniumZip -DestinationPath $SteamPath -Force
+Remove-Item $MillenniumZip -Force -ErrorAction SilentlyContinue
+Write-Success "Millennium v3 instalado com sucesso!"
+
+# 5. Baixar e configurar ManifestAdvTools
+$PluginsDir = Join-Path $SteamPath "millennium\plugins"
+if (-not (Test-Path $PluginsDir)) {
+    New-Item -Path $PluginsDir -ItemType Directory -Force | Out-Null
 }
 
-try {
-    Download-And-Extract -Url $MillenniumZipUrl -DestFolder $SteamPath -Name "Millennium v3"
-} catch {
-    Write-Fail "Erro crítico ao baixar Millennium: $_"
-    exit 1
+$PluginTargetDir = Join-Path $PluginsDir "ManifestAdvTools"
+if (-not (Test-Path $PluginTargetDir)) {
+    New-Item -Path $PluginTargetDir -ItemType Directory -Force | Out-Null
 }
 
-# 5. Instalar o Plugin ManifestAdvTools
 Write-Step "Baixando o plugin ManifestAdvTools..."
-$PluginZipUrl = "https://github.com/l89699756-design/ManifestAdvTools/releases/latest/download/ManifestAdvTools.zip"
-$PluginsRoot = Join-Path $SteamPath "millennium\plugins"
-$DestPlugin1 = Join-Path $PluginsRoot "ManifestAdvTools"
-$DestPlugin2 = Join-Path $PluginsRoot "luatools"
+$PluginUrl = "https://github.com/l89699756-design/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
+$PluginZip = Join-Path $SteamPath "ManifestAdvTools_temp.zip"
 
-try {
-    Download-And-Extract -Url $PluginZipUrl -DestFolder $DestPlugin1 -Name "ManifestAdvTools"
-    # Criar cópia com o nome 'luatools' para compatibilidade total com instalações existentes
-    if (Test-Path $DestPlugin2) {
-        Remove-Item $DestPlugin2 -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    Copy-Item -Path $DestPlugin1 -Destination $DestPlugin2 -Recurse -Force -ErrorAction SilentlyContinue
-} catch {
-    Write-Fail "Falha ao baixar plugin: $_"
-    exit 1
-}
+Write-Step "Baixando ManifestAdvTools..."
+Invoke-WebRequest -Uri $PluginUrl -OutFile $PluginZip -TimeoutSec 60
+Write-Step "Extraindo ManifestAdvTools em $PluginTargetDir..."
+Expand-Archive -Path $PluginZip -DestinationPath $PluginTargetDir -Force
+Remove-Item $PluginZip -Force -ErrorAction SilentlyContinue
+Write-Success "ManifestAdvTools instalado com sucesso!"
 
-# 6. Ativar o Plugin no Millennium (config.json)
-Write-Step "Habilitando ManifestAdvTools nas configurações do Millennium..."
+# 6. Otimizar Millennium Config (evita travamento de rede no boot)
 $MillConfigDir = Join-Path $SteamPath "millennium\config"
 if (-not (Test-Path $MillConfigDir)) {
     New-Item -Path $MillConfigDir -ItemType Directory -Force | Out-Null
 }
-
 $MillConfigFile = Join-Path $MillConfigDir "config.json"
-$ConfigObj = @{
-    plugins = @{
-        enabledPlugins = @("ManifestAdvTools", "luatools")
+
+$ConfigObj = [PSCustomObject]@{
+    general = [PSCustomObject]@{
+        checkForMillenniumUpdates = $false
+        checkForPluginAndThemeUpdates = $false
+        injectJavascript = $true
+        injectCSS = $true
+        accentColor = "DEFAULT_ACCENT_COLOR"
+        millenniumUpdateChannel = "stable"
+    }
+    plugins = [PSCustomObject]@{
+        enabledPlugins = @("ManifestAdvTools")
+    }
+    themes = [PSCustomObject]@{
+        activeTheme = "default"
+        allowedScripts = $true
+        allowedStyles = $true
     }
 }
 
-if (Test-Path $MillConfigFile) {
-    try {
-        $existing = Get-Content -Path $MillConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($existing.plugins) {
-            $list = @($existing.plugins.enabledPlugins)
-            if ($list -notcontains "ManifestAdvTools") { $list += "ManifestAdvTools" }
-            if ($list -notcontains "luatools") { $list += "luatools" }
-            $existing.plugins.enabledPlugins = $list
-            $ConfigObj = $existing
-        }
-    } catch {}
-}
-
 $ConfigObj | ConvertTo-Json -Depth 10 | Set-Content -Path $MillConfigFile -Encoding UTF8
-Write-Success "Plugin habilitado com sucesso em: $MillConfigFile"
+Write-Success "Configurações otimizadas salvas em: $MillConfigFile"
 
-# 7. Limpar flags de Beta e Offline do Steam
+# 7. Limpar flags de Beta e Cfg da Steam
 Write-Step "Otimizando parâmetros de inicialização..."
 $BetaFolder = Join-Path $SteamPath "package\beta"
 if (Test-Path $BetaFolder) {
@@ -218,14 +163,14 @@ if (Test-Path $SteamCfg) {
     Remove-Item $SteamCfg -Force -ErrorAction SilentlyContinue
 }
 
-# 8. Iniciar Steam com -clearbeta
-Write-Step "Iniciando a Steam com o Millennium e ManifestAdvTools..."
+# 8. Iniciar Steam
+Write-Step "Iniciando a Steam..."
 $SteamExe = Join-Path $SteamPath "steam.exe"
-Start-Process -FilePath $SteamExe -ArgumentList "-clearbeta"
+Start-Process -FilePath $SteamExe
 
 Write-Host ""
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host "    🎉 INSTALAÇÃO E ATIVAÇÃO CONCLUÍDAS COM SUCESSO!     " -ForegroundColor White
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host "A Steam está sendo iniciada com o Millennium e o ManifestAdvTools." -ForegroundColor Cyan
-Write-Host "Na primeira inicialização, aguarde alguns segundos para o carregamento completo!`n" -ForegroundColor Gray
+Write-Host "Aguarde alguns instantes para a interface carregar completamente!`n" -ForegroundColor Gray
