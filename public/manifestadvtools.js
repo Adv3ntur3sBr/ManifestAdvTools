@@ -1818,7 +1818,7 @@
 
         const discordBtn = createIconButton(
           "lt-settings-discord",
-          "fa-brands fa-discord",
+          "fa-solid fa-globe",
           "menu.discord",
           "Discord",
         );
@@ -2623,7 +2623,7 @@
 
     const discordBtn = createIconButton(
       "lt-fixes-discord",
-      "fa-brands fa-discord",
+      "fa-solid fa-globe",
       "menu.discord",
       "Discord",
     );
@@ -3021,7 +3021,7 @@
       try {
         overlay.remove();
       } catch (_) {}
-      const url = "https://discord.gg/luatools";
+      const url = "https://manifest-adv-tools.vercel.app";
       try {
         Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", {
           url,
@@ -3749,8 +3749,8 @@
     discordIconBtn.href = "#";
     const discordBtnColors = getThemeColors();
     discordIconBtn.style.cssText = `display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(${discordBtnColors.rgbString},0.08);border:1px solid ${discordBtnColors.border};border-radius:8px;color:${discordBtnColors.accent};font-size:16px;text-decoration:none;transition:all 0.2s ease;cursor:pointer;`;
-    discordIconBtn.innerHTML = '<i class="fa-brands fa-discord"></i>';
-    discordIconBtn.title = t("menu.discord", "Discord");
+    discordIconBtn.innerHTML = '<i class="fa-solid fa-globe"></i>';
+    discordIconBtn.title = t("menu.discord", "Site Oficial");
     discordIconBtn.onmouseover = function () {
       const c = getThemeColors();
       this.style.background = `rgba(${c.rgbString},0.18)`;
@@ -3768,7 +3768,7 @@
     discordIconBtn.onclick = function (e) {
       e.preventDefault();
       try {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://discord.gg/luatools" });
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://manifest-adv-tools.vercel.app" });
       } catch (_) {}
     };
     iconButtons.appendChild(discordIconBtn);
@@ -4161,7 +4161,7 @@
       refreshBtn.title = t("settings.refresh", "Refresh");
       saveBtn.title = t("settings.save", "Save Settings");
       backBtn.title = t("Back", "Back");
-      discordIconBtn.title = t("menu.discord", "Discord");
+      discordIconBtn.title = t("menu.discord", "Site Oficial");
       closeIconBtn.title = t("settings.close", "Close");
     }
     applyStaticTranslations();
@@ -5990,8 +5990,11 @@
         askRestartConfirmation();
       }));
 
-      actGrid.appendChild(createActionButton("Comunidade Discord", "fa-brands fa-discord", function() {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://discord.gg/luatools" });
+      actGrid.appendChild(createActionButton("Site Oficial", "fa-solid fa-globe", function() {
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://manifest-adv-tools.vercel.app" });
+      }));
+      actGrid.appendChild(createActionButton("GitHub", "fa-brands fa-github", function() {
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://github.com/l89699756-design/ManifestAdvTools" });
       }));
 
       actionsCard.appendChild(actGrid);
@@ -6230,7 +6233,7 @@
 
     discordIconBtn.addEventListener("click", function (e) {
       e.preventDefault();
-      const url = "https://discord.gg/luatools";
+      const url = "https://manifest-adv-tools.vercel.app";
       try {
         Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", {
           url,

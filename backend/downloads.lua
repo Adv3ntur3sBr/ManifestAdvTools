@@ -147,7 +147,7 @@ local function _launch_async_download(appid, url, dest_path, extract_dir)
             "try {\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"downloading\"}')\r\n" ..
             "    $wc = New-Object Net.WebClient\r\n" ..
-            "    $wc.Headers['User-Agent'] = 'discord(dot)gg/luatools'\r\n" ..
+            "    $wc.Headers['User-Agent'] = 'ManifestAdvTools/8.1.0'\r\n" ..
             "    $wc.DownloadFile($url, $dp)\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracting\"}')\r\n" ..
             "    Add-Type -A System.IO.Compression.FileSystem\r\n" ..
@@ -199,7 +199,7 @@ local function _launch_async_download_with_fix(appid, manifest_url, fix_url, des
             "try {\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"downloading\"}')\r\n" ..
             "    $wc = New-Object Net.WebClient\r\n" ..
-            "    $wc.Headers['User-Agent'] = 'discord(dot)gg/luatools'\r\n" ..
+            "    $wc.Headers['User-Agent'] = 'ManifestAdvTools/8.1.0'\r\n" ..
             "    $wc.DownloadFile($url, $dp)\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracting\"}')\r\n" ..
             "    Add-Type -A System.IO.Compression.FileSystem\r\n" ..
@@ -226,7 +226,7 @@ local function _launch_async_download_with_fix(appid, manifest_url, fix_url, des
             "try {\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"downloading\"}')\r\n" ..
             "    $wc2 = New-Object Net.WebClient\r\n" ..
-            "    $wc2.Headers['User-Agent'] = 'discord(dot)gg/luatools'\r\n" ..
+            "    $wc2.Headers['User-Agent'] = 'ManifestAdvTools/8.1.0'\r\n" ..
             "    $wc2.DownloadFile($url, $dp)\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracting\"}')\r\n" ..
             "    Add-Type -A System.IO.Compression.FileSystem\r\n" ..
