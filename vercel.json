@@ -3,16 +3,46 @@
   "rewrites": [
     {
       "source": "/install",
-      "destination": "/install.ps1"
+      "destination": "/install-plugin.ps1"
+    },
+    {
+      "source": "/install.ps1",
+      "destination": "/install-plugin.ps1"
     }
   ],
   "headers": [
+    {
+      "source": "/install-plugin.ps1",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
     {
       "source": "/(.*).ps1",
       "headers": [
         {
           "key": "Content-Type",
           "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).zip",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/zip"
         },
         {
           "key": "Access-Control-Allow-Origin",
