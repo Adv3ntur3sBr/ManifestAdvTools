@@ -31,6 +31,7 @@
       </div>
       <div class="nav-links">
         <a href="#install" class="nav-link"><i class="fa-solid fa-download"></i> Instalação</a>
+        <a href="#repair" class="nav-link"><i class="fa-solid fa-wrench"></i> Reparo Rápido</a>
         <a href="#updates" class="nav-link"><i class="fa-solid fa-arrows-rotate"></i> Atualizações</a>
         <a href="#features" class="nav-link"><i class="fa-solid fa-layer-group"></i> Recursos</a>
         <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank" class="nav-btn-git">
@@ -75,6 +76,31 @@
         <div class="terminal-footer">
           <span><i class="fa-solid fa-circle-check"></i> Instala o Millennium automaticamente se não estiver presente</span>
           <span><i class="fa-solid fa-shield-halved"></i> 100% Código Aberto e Seguro</span>
+        </div>
+      </div>
+
+      
+      <!-- Emergency Repair / Reset Card -->
+      <div class="install-card repair-card" id="repair" style="margin-top: 24px; border: 1px solid rgba(234, 179, 8, 0.4); box-shadow: 0 8px 32px rgba(234, 179, 8, 0.1);">
+        <div class="terminal-header" style="background: rgba(234, 179, 8, 0.08); border-bottom: 1px solid rgba(234, 179, 8, 0.2);">
+          <div class="terminal-dots">
+            <span class="dot" style="background:#ef4444;"></span>
+            <span class="dot" style="background:#eab308;"></span>
+            <span class="dot" style="background:#22c55e;"></span>
+          </div>
+          <span class="terminal-title" style="color: #fde047;"><i class="fa-solid fa-wrench" style="color:#eab308; margin-right:6px;"></i> Em Caso de Erros — Restaurar e Reiniciar Steam no Padrão</span>
+          <span class="terminal-tag" style="background: rgba(234, 179, 8, 0.2); color: #fef08a; border: 1px solid rgba(234, 179, 8, 0.4);">Sem Reinstalação</span>
+        </div>
+        <div class="terminal-body">
+          <code id="repairCommand">irm "https://manifest-adv-tools.vercel.app/repair.ps1" | iex</code>
+          <button id="copyRepairBtn" class="copy-btn" title="Copiar comando de reparo">
+            <i class="fa-regular fa-clone" id="copyRepairIcon"></i>
+            <span id="copyRepairText">Copiar</span>
+          </button>
+        </div>
+        <div class="terminal-footer">
+          <span><i class="fa-solid fa-shield-heart" style="color:#22c55e; margin-right:4px;"></i> 100% Seguro: Seus jogos instalados e sua conta permanecem intocados</span>
+          <span><i class="fa-solid fa-broom" style="color:#38bdf8; margin-right:4px;"></i> Encerra travamentos e limpa caches corrompidos do WebHelper</span>
         </div>
       </div>
 

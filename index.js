@@ -42,6 +42,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  
+  // Repair command elements
+  const copyRepairBtn = document.getElementById("copyRepairBtn");
+  const copyRepairIcon = document.getElementById("copyRepairIcon");
+  const copyRepairText = document.getElementById("copyRepairText");
+  const repairCmd = document.getElementById("repairCommand");
+
+  if (repairCmd && window.location.protocol.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1")) {
+    repairCmd.textContent = `irm "${window.location.origin}/repair.ps1" | iex`;
+  }
+
+  if (copyRepairBtn && repairCmd) {
+    copyRepairBtn.addEventListener("click", () => {
+      const textToCopy = repairCmd.textContent.trim();
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyRepairBtn.classList.add("copied");
+        copyRepairIcon.className = "fa-solid fa-check";
+        copyRepairText.textContent = "Copiado!";
+        setTimeout(() => {
+          copyRepairBtn.classList.remove("copied");
+          copyRepairIcon.className = "fa-regular fa-clone";
+          copyRepairText.textContent = "Copiar";
+        }, 2500);
+      }).catch(err => {
+        console.error("Falha ao copiar:", err);
+      });
+    });
+  }
+
   // Check updates via GitHub API
   async function checkUpdates() {
     if (updateSpinner) updateSpinner.classList.add("fa-spin");
