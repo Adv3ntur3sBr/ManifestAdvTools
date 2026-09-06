@@ -1,37 +1,25 @@
 {
-  "version": 2,
   "cleanUrls": true,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/install-plugin.ps1",
-      "dest": "/install-plugin.ps1",
-      "headers": {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
-      "src": "/install.ps1",
-      "dest": "/install.ps1",
-      "headers": {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
-      "src": "/install",
-      "dest": "/install.ps1",
-      "headers": {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/install",
+      "destination": "/install.ps1"
     }
   ],
   "headers": [
+    {
+      "source": "/(.*).ps1",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
