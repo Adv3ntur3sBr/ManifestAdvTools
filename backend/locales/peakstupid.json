@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Mornus Key",
     "settings.morrenusApiKey.description": "Key make Sadie go brrr. Get key at {link}",
     "settings.morrenusApiKey.placeholder": "Smash key here",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

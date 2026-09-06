@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Cheie API Morrenus",
     "settings.morrenusApiKey.description": "Cheia API este necesară pentru a utiliza Sadie Source. Obțineți de la {link}",
     "settings.morrenusApiKey.placeholder": "Introduceți cheia API",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

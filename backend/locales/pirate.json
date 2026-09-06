@@ -221,6 +221,7 @@
     "settings.morrenusApiKey.label": "Morrenus Secret Scroll",
     "settings.morrenusApiKey.description": "Ye be needin' this mark to scupper Sadie's Loot. Plunder it from {link}",
     "settings.morrenusApiKey.placeholder": "Scribble yer secret code here",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

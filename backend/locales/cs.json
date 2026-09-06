@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Morrenus API klíč",
     "settings.morrenusApiKey.description": "API klíč je vyžadován pro použití Sadie Source. Získejte z {link}",
     "settings.morrenusApiKey.placeholder": "Zadejte svůj API klíč",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

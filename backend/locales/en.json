@@ -224,6 +224,7 @@
     "settings.useSteamLanguage.no": "No",
     "settings.useSteamLanguage.yes": "Yes",
     "{fix} applied successfully!": "{fix} applied successfully!",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add via ManifestAdvTools"
   }

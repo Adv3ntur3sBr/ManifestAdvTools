@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "คีย์ API ของ Morrenus",
     "settings.morrenusApiKey.description": "ต้องใช้คีย์ API เพื่อใช้งาน Sadie Source รับได้ที่ {link}",
     "settings.morrenusApiKey.placeholder": "กรอกคีย์ API ของคุณ",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

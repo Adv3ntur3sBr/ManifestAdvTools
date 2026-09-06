@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Clé API Morrenus",
     "settings.morrenusApiKey.description": "Clé API requise pour utiliser Sadie Source. Obtenez-la sur {link}",
     "settings.morrenusApiKey.placeholder": "Entrez votre clé API",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "مفتاح API مورينوس",
     "settings.morrenusApiKey.description": "مفتاح API مطلوب لاستخدام مصدر سادي. احصل عليه من {link}",
     "settings.morrenusApiKey.placeholder": "أدخل مفتاح API الخاص بك",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "מפתח API של מورנוס",
     "settings.morrenusApiKey.description": "מפתח API נדרש לשימוש ב-Sadie Source. קבל אותו מ-{link}",
     "settings.morrenusApiKey.placeholder": "הזן את מפתח ה-API שלך",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

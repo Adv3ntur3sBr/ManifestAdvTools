@@ -1903,6 +1903,14 @@
         );
         cardGrid.appendChild(fetchApisBtn);
 
+        const reloadUiCardBtn = createCardButton(
+          "lt-settings-reload-ui",
+          "menu.reloadUi",
+          "Recarregar Visual (RL)",
+          "fa-arrows-rotate",
+        );
+        cardGrid.appendChild(reloadUiCardBtn);
+
         const restartSteamCardBtn = createCardButton(
           "lt-settings-restart-steam",
           "menu.restartSteam",
@@ -1965,6 +1973,14 @@
               "ManifestAdvTools",
               "ManifestAdvTools v8.1.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Mais de 5.800 jogos compatíveis\n• Suporte nativo a OnlineFix\n• Reinício integrado com 1 clique"
             );
+          });
+        }
+
+        if (typeof reloadUiCardBtn !== "undefined" && reloadUiCardBtn) {
+          reloadUiCardBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            try { overlay.remove(); } catch (_) {}
+            window.location.reload();
           });
         }
 

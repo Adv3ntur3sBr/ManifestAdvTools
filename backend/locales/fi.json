@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Morrenus API-avain",
     "settings.morrenusApiKey.description": "API-avain tarvitaan Sadie Sourcen käyttöön. Hanki osoitteesta {link}",
     "settings.morrenusApiKey.placeholder": "Syötä API-avaimesi",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }

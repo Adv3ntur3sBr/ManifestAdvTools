@@ -224,6 +224,7 @@
     "settings.morrenusApiKey.label": "Morrenus API Anahtarı",
     "settings.morrenusApiKey.description": "Sadie Source'u kullanmak için API anahtarı gereklidir. {link} adresinden alın",
     "settings.morrenusApiKey.placeholder": "API Anahtarınızı girin",
+    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
     "menu.addViaLuaTools": "Add (ManifestAdvTools)"
   }
