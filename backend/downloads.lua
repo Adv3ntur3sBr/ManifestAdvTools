@@ -119,6 +119,15 @@ function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name
     _set_download_state(appid, { status = "done", success = true, api = api_name })
 end
 
+local function _ensure_silent_vbs()
+    local vbs_path = fs.join(paths.get_plugin_dir(), "backend", "silent_run.vbs")
+    if not fs.exists(vbs_path) then
+        local code = 'Set shell = CreateObject("WScript.Shell")\r\nIf WScript.Arguments.Count > 0 Then\r\n    cmd = "powershell.exe -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File \"\"\" & WScript.Arguments(0) & \"\"\"\r\n    shell.Run cmd, 0, False\r\nEnd If\r\n'
+        m_utils.write_file(vbs_path, code)
+    end
+    return vbs_path
+end
+
 local function _win_slash(p)
     return (p:gsub("\\\\", "/"):gsub("\\", "/"))
 end
@@ -158,7 +167,8 @@ local function _launch_async_download(appid, url, dest_path, extract_dir)
             "}\r\n"
         m_utils.write_file(ps1_path, ps1)
         -- /b = no new window; -WindowStyle Hidden = fully invisible process
-        local cmd = 'cmd.exe /c start /b "" powershell.exe -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. ps1_path .. '"'
+        local vbs_path = _ensure_silent_vbs()
+        local cmd = 'wscript.exe //b //nologo "' .. vbs_path .. '" "' .. ps1_path .. '"'
         m_utils.exec(cmd)
     else
         local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
@@ -209,7 +219,8 @@ local function _launch_async_download_with_fix(appid, manifest_url, fix_url, des
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"failed\",\"error\":\"manifest download failed\"}')\r\n" ..
             "}\r\n"
         m_utils.write_file(ps1_path, ps1)
-        m_utils.exec('cmd.exe /c start /b "" powershell.exe -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. ps1_path .. '"')
+        local vbs_path = _ensure_silent_vbs()
+        m_utils.exec('wscript.exe //b //nologo "' .. vbs_path .. '" "' .. ps1_path .. '"')
 
         -- === Script 2: OnlineFix download + extract (runs in parallel) ===
         local fix_ps1_path = fs.join(dest_root, "fix_" .. tostring(appid) .. "_dl.ps1")
@@ -236,7 +247,7 @@ local function _launch_async_download_with_fix(appid, manifest_url, fix_url, des
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"failed\",\"error\":\"fix download failed\"}')\r\n" ..
             "}\r\n"
         m_utils.write_file(fix_ps1_path, fix_ps1)
-        m_utils.exec('cmd.exe /c start /b "" powershell.exe -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. fix_ps1_path .. '"')
+        m_utils.exec('wscript.exe //b //nologo "' .. vbs_path .. '" "' .. fix_ps1_path .. '"')
     else
         -- Linux: parallel background jobs
         local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")

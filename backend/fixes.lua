@@ -87,7 +87,8 @@ function fixes.apply_game_fix(appid, download_url, install_path, fix_type, game_
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"failed\",\"error\":\"download failed\"}')\r\n" ..
             "}\r\n"
         m_utils.write_file(ps1_path, ps1)
-        local cmd = 'cmd.exe /c start /b "" powershell.exe -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. ps1_path .. '"'
+        local vbs_path = fs.join(paths.get_plugin_dir(), "backend", "silent_run.vbs")
+        local cmd = 'wscript.exe //b //nologo "' .. vbs_path .. '" "' .. ps1_path .. '"'
         m_utils.exec(cmd)
     else
         local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
