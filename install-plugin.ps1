@@ -149,9 +149,9 @@ if (-not (Test-Path $PluginsDir)) {
     New-Item -Path $PluginsDir -ItemType Directory -Force | Out-Null
 }
 
-$PluginTargetDir = Join-Path $PluginsDir "ManifestAdvTools"
-if (-not (Test-Path $PluginTargetDir)) {
-    New-Item -Path $PluginTargetDir -ItemType Directory -Force | Out-Null
+$TargetPluginDir = Join-Path $PluginsDir "ManifestAdvTools"
+if (-not (Test-Path $TargetPluginDir)) {
+    New-Item -Path $TargetPluginDir -ItemType Directory -Force | Out-Null
 }
 
 Write-Step "Baixando o plugin ManifestAdvTools da Vercel..."
@@ -161,7 +161,7 @@ $DownloadSuccess = $false
 $Urls = @(
     "https://manifest-adv-tools.vercel.app/ManifestAdvTools.zip",
     "https://manifest-adv-tools-ad-v.vercel.app/ManifestAdvTools.zip",
-    "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
+    "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/v8.1.1/ManifestAdvTools.zip"
 )
 
 foreach ($u in $Urls) {

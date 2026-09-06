@@ -149,9 +149,9 @@ if (-not (Test-Path $PluginsDir)) {
     New-Item -Path $PluginsDir -ItemType Directory -Force | Out-Null
 }
 
-$PluginTargetDir = Join-Path $PluginsDir "ManifestAdvTools"
-if (-not (Test-Path $PluginTargetDir)) {
-    New-Item -Path $PluginTargetDir -ItemType Directory -Force | Out-Null
+$TargetPluginDir = Join-Path $PluginsDir "ManifestAdvTools"
+if (-not (Test-Path $TargetPluginDir)) {
+    New-Item -Path $TargetPluginDir -ItemType Directory -Force | Out-Null
 }
 
 Write-Step "Baixando o plugin ManifestAdvTools da Vercel..."
