@@ -6010,7 +6010,7 @@
         Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://manifest-adv-tools.vercel.app" });
       }));
       actGrid.appendChild(createActionButton("GitHub", "fa-brands fa-github", function() {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://github.com/l89699756-design/ManifestAdvTools" });
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://github.com/Adv3ntur3sBr/ManifestAdvTools" });
       }));
 
       actionsCard.appendChild(actGrid);

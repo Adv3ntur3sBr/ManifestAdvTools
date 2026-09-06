@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const currentVersion = "v8.1.0";
-  const repoOwner = "l89699756-design";
+  const repoOwner = "Adv3ntur3sBr";
   const repoName = "ManifestAdvTools";
 
   // Elements

@@ -51,7 +51,7 @@ function auto_update.check_for_updates_now()
                 end
             end
             if zip_url == "" and tag_name ~= "" then
-                zip_url = "https://github.com/l89699756-design/ManifestAdvTools/releases/download/" .. tag_name .. "/" .. asset_name
+                zip_url = "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/" .. tag_name .. "/" .. asset_name
             end
         end
     end

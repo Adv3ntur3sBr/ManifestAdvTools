@@ -161,7 +161,7 @@ $DownloadSuccess = $false
 $Urls = @(
     "https://manifest-adv-tools.vercel.app/ManifestAdvTools.zip",
     "https://manifest-adv-tools-ad-v.vercel.app/ManifestAdvTools.zip",
-    "https://github.com/l89699756-design/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
+    "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
 )
 
 foreach ($u in $Urls) {
