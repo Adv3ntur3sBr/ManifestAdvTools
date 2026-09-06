@@ -9,8 +9,10 @@
 Abra o **PowerShell** no Windows e execute o comando abaixo:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install.ps1 | iex"
+irm "https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install-plugin.ps1" | iex
 ```
+
+*(Caso utilize o deploy na Vercel, você também pode usar: `irm "https://seu-app.vercel.app/install-plugin.ps1" | iex`)*
 
 > 💡 **O que o instalador faz:**
 > 1. Localiza sua pasta do Steam automaticamente pelo Registro do Windows.
