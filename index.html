@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ManifestAdvTools — O Gerenciador Definitivo para Steam</title>
+  <meta name="description" content="Instalação automática do ManifestAdvTools e Millennium para Steam. Baixe manifestos, onlinefixes e personalize sua biblioteca.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- Ambient background lighting -->
+  <div class="glow-sphere sphere-1"></div>
+  <div class="glow-sphere sphere-2"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">ManifestAdvTools</span>
+          <span class="brand-badge">v8.1.0</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="#install" class="nav-link"><i class="fa-solid fa-download"></i> Instalação</a>
+        <a href="#updates" class="nav-link"><i class="fa-solid fa-arrows-rotate"></i> Atualizações</a>
+        <a href="#features" class="nav-link"><i class="fa-solid fa-layer-group"></i> Recursos</a>
+        <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank" class="nav-btn-git">
+          <i class="fa-brands fa-github"></i> GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        Totalmente compatível com Steam & Millennium
+      </div>
+      <h1 class="hero-title">
+        A Ferramenta Mais Poderosa para o seu <span class="gradient-text">Steam Client</span>
+      </h1>
+      <p class="hero-subtitle">
+        Gerencie manifestos, baixe jogos com OnlineFix integrado, navegue com controle e aproveite 7 fontes públicas ativas com atualização automática contínua.
+      </p>
+
+      <!-- Terminal Quick Install -->
+      <div class="install-card" id="install">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="terminal-title"><i class="fa-solid fa-terminal"></i> PowerShell — Instalação 1-Click</span>
+          <span class="terminal-tag">Automático</span>
+        </div>
+        <div class="terminal-body">
+          <code id="installCommand">powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install.ps1 | iex"</code>
+          <button id="copyBtn" class="copy-btn" title="Copiar comando">
+            <i class="fa-regular fa-clone" id="copyIcon"></i>
+            <span id="copyText">Copiar</span>
+          </button>
+        </div>
+        <div class="terminal-footer">
+          <span><i class="fa-solid fa-circle-check"></i> Instala o Millennium automaticamente se não estiver presente</span>
+          <span><i class="fa-solid fa-shield-halved"></i> 100% Código Aberto e Seguro</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="hero-actions">
+        <button id="manualDownloadBtn" class="btn btn-primary">
+          <i class="fa-solid fa-file-zipper"></i> Baixar ZIP Manual
+        </button>
+        <a href="#updates" class="btn btn-secondary">
+          <i class="fa-solid fa-magnifying-glass"></i> Checar Atualizações
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Update Checker Section -->
+  <section class="section-updates" id="updates">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-code-branch"></i> Versionamento Contínuo</div>
+        <h2 class="section-title">Central de <span class="gradient-text">Atualizações do Projeto</span></h2>
+        <p class="section-desc">Consulte a versão mais recente em tempo real diretamente do repositório oficial do ManifestAdvTools.</p>
+      </div>
+
+      <div class="update-box">
+        <div class="update-box-header">
+          <div class="project-info">
+            <i class="fa-brands fa-github project-icon"></i>
+            <div>
+              <div class="project-name" id="projectName">l89699756-design / ManifestAdvTools</div>
+              <div class="project-sub">Repositório Oficial no GitHub</div>
+            </div>
+          </div>
+          <button id="checkUpdateBtn" class="btn btn-accent">
+            <i class="fa-solid fa-rotate" id="updateSpinner"></i>
+            <span>Verificar Atualizações</span>
+          </button>
+        </div>
+
+        <div class="update-results" id="updateResults">
+          <div class="update-row">
+            <div class="update-meta">
+              <span class="meta-label">Versão no Sistema:</span>
+              <span class="meta-val current-ver" id="currentVerDisplay">v8.1.0</span>
+            </div>
+            <div class="update-meta">
+              <span class="meta-label">Versão Mais Recente:</span>
+              <span class="meta-val latest-ver" id="latestVerDisplay">Consultando...</span>
+            </div>
+            <div class="update-meta">
+              <span class="meta-label">Status:</span>
+              <span class="status-badge" id="statusBadge"><i class="fa-solid fa-spinner fa-spin"></i> Pronto para checar</span>
+            </div>
+          </div>
+
+          <div class="changelog-card" id="changelogCard" style="display: none;">
+            <div class="changelog-title"><i class="fa-solid fa-newspaper"></i> Notas de Atualização (Release Notes):</div>
+            <div class="changelog-body" id="changelogBody">Nenhuma atualização pesquisada ainda.</div>
+            <div class="changelog-actions">
+              <a href="#" id="releaseDownloadLink" class="btn btn-small" target="_blank">
+                <i class="fa-solid fa-download"></i> Baixar Release Oficial
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="section-features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-sparkles"></i> Destaques</div>
+        <h2 class="section-title">Construído para a Melhor Experiência</h2>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-server"></i></div>
+          <h3>7 Fontes de Manifestos</h3>
+          <p>Acesse mais de 30.000 jogos e manifestos através de provedores como Ryuu, Raian, Sushi, GOG Pirate, LuaDepot e Angel.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+          <h3>OnlineFix Integrado</h3>
+          <p>Download e extração automática de patches multiplayer e fixes compatíveis sem necessidade de configurações manuais.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-gamepad"></i></div>
+          <h3>Suporte a Gamepad</h3>
+          <p>Navegação 100% adaptada para controles e modo Steam Big Picture com feedback visual e atalhos rápidos.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-palette"></i></div>
+          <h3>11 Temas Customizáveis</h3>
+          <p>Personalize com temas elegantes como Catppuccin, Dracula, Gruvbox, Cyberpunk e Ocean com sincronização dinâmica.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <strong>ManifestAdvTools</strong> — Feito para a comunidade gamer.
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+        <a href="https://discord.gg/luatools" target="_blank"><i class="fa-brands fa-discord"></i> Discord</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="index.js"></script>
+</body>
+</html>
