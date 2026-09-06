@@ -3,6 +3,30 @@
   "cleanUrls": true,
   "routes": [
     {
+      "src": "/install-plugin.ps1",
+      "dest": "/install-plugin.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "src": "/install.ps1",
+      "dest": "/install.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "src": "/install",
+      "dest": "/install.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
