@@ -87,11 +87,28 @@ Write-Success "Processos da Steam encerrados."
 
 # 3. Instalar Steamtools
 Write-Step "Verificando Steamtools (desbloqueador de manifestos)..."
-$SteamtoolsUrl = "https://github.com/madoiscool/lt_api_links/releases/download/ost-148/ost.zip"
 $SteamtoolsZip = Join-Path $SteamPath "steamtools_temp.zip"
-
-Write-Step "Baixando Steamtools..."
-Invoke-WebRequest -Uri $SteamtoolsUrl -OutFile $SteamtoolsZip -TimeoutSec 60
+$SteamtoolsUrls = @(
+    "https://manifest-adv-tools.vercel.app/steamtools.zip",
+    "https://github.com/madoiscool/lt_api_links/releases/download/ost-148/ost.zip"
+)
+$StSuccess = $false
+foreach ($stUrl in $SteamtoolsUrls) {
+    try {
+        Write-Step "Baixando Steamtools de $stUrl..."
+        Invoke-WebRequest -Uri $stUrl -OutFile $SteamtoolsZip -TimeoutSec 60
+        if ((Test-Path $SteamtoolsZip) -and (Get-Item $SteamtoolsZip).Length -gt 10000) {
+            $StSuccess = $true
+            break
+        }
+    } catch {
+        Write-Warn "Falha ao baixar Steamtools de $stUrl, tentando espelho..."
+    }
+}
+if (-not $StSuccess) {
+    Write-Fail "Falha ao baixar Steamtools."
+    exit 1
+}
 Write-Step "Extraindo Steamtools em $SteamPath..."
 Expand-Archive -Path $SteamtoolsZip -DestinationPath $SteamPath -Force
 Remove-Item $SteamtoolsZip -Force -ErrorAction SilentlyContinue
@@ -99,11 +116,28 @@ Write-Success "Steamtools instalado com sucesso!"
 
 # 4. Instalar Millennium v3
 Write-Step "Instalando Millennium v3..."
-$MillenniumUrl = "https://github.com/SteamClientHomebrew/Millennium/releases/download/v3.4.1/millennium-v3.4.1-windows-x86_64.zip"
 $MillenniumZip = Join-Path $SteamPath "millennium_temp.zip"
-
-Write-Step "Baixando Millennium v3..."
-Invoke-WebRequest -Uri $MillenniumUrl -OutFile $MillenniumZip -TimeoutSec 60
+$MillenniumUrls = @(
+    "https://manifest-adv-tools.vercel.app/millennium.zip",
+    "https://github.com/SteamClientHomebrew/Millennium/releases/download/v3.4.1/millennium-v3.4.1-windows-x86_64.zip"
+)
+$MilSuccess = $false
+foreach ($mUrl in $MillenniumUrls) {
+    try {
+        Write-Step "Baixando Millennium v3 de $mUrl..."
+        Invoke-WebRequest -Uri $mUrl -OutFile $MillenniumZip -TimeoutSec 60
+        if ((Test-Path $MillenniumZip) -and (Get-Item $MillenniumZip).Length -gt 10000) {
+            $MilSuccess = $true
+            break
+        }
+    } catch {
+        Write-Warn "Falha ao baixar Millennium de $mUrl, tentando espelho..."
+    }
+}
+if (-not $MilSuccess) {
+    Write-Fail "Falha ao baixar Millennium v3."
+    exit 1
+}
 Write-Step "Extraindo Millennium v3 em $SteamPath..."
 Expand-Archive -Path $MillenniumZip -DestinationPath $SteamPath -Force
 Remove-Item $MillenniumZip -Force -ErrorAction SilentlyContinue
