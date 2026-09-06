@@ -77,7 +77,7 @@ function fixes.apply_game_fix(appid, download_url, install_path, fix_type, game_
             "try {\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"downloading\"}')\r\n" ..
             "    $wc = New-Object Net.WebClient\r\n" ..
-            "    $wc.Headers['User-Agent'] = 'ManifestAdvTools/8.1.0'\r\n" ..
+            "    $wc.Headers['User-Agent'] = 'ManifestAdvTools/8.1.1'\r\n" ..
             "    $wc.DownloadFile($url, $dp)\r\n" ..
             "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracting\"}')\r\n" ..
             "    Add-Type -A System.IO.Compression.FileSystem\r\n" ..

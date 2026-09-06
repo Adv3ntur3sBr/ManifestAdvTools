@@ -2,6 +2,7 @@
   "github": {
     "owner": "Adv3ntur3sBr",
     "repo": "ManifestAdvTools",
-    "asset_name": "ManifestAdvTools.zip"
+    "asset_name": "ManifestAdvTools.zip",
+    "tag_prefix": "v"
   }
 }
