@@ -1885,7 +1885,7 @@
           "Menu de Correções",
           "fa-wrench",
         );
-        if (isGamePage) cardGrid.appendChild(fixesMenuBtn);
+        // fixesMenuBtn removed
 
         const checkBtn = createCardButton(
           "lt-settings-check",
@@ -3818,7 +3818,7 @@
     const TABS = [
       { id: "general", icon: "fa-sliders", labelKey: "settings.tab.general", labelFallback: "Geral" },
       { id: "apis", icon: "fa-plug", labelKey: "settings.tab.apis", labelFallback: "Fontes de API" },
-      { id: "fixes", icon: "fa-wrench", labelKey: "settings.tab.fixes", labelFallback: "Correções" },
+      
       { id: "luas", icon: "fa-gamepad", labelKey: "settings.tab.luas", labelFallback: "Jogos Instalados" },
       { id: "about", icon: "fa-circle-info", labelKey: "settings.tab.about", labelFallback: "Sobre" },
     ];
@@ -7073,7 +7073,7 @@
             if (fs === "done") {
               label = "✓ " + lt("Tudo pronto! Jogo e OnlineFix adicionados à Steam.", "All done! Game & OnlineFix added to Steam.");
             } else if (fs === "not_available") {
-              label = "✓ " + lt("Manifesto instalado com sucesso! (Sem OnlineFix para este jogo)", "Manifest installed! (No OnlineFix available for this game)");
+              label = "✓ " + lt("Manifesto instalado com sucesso!", "Manifest installed successfully!");
             } else {
               label = "✓ " + lt("Manifesto instalado com sucesso!", "Manifest installed successfully!");
             }
@@ -7438,7 +7438,7 @@ function addLuaToolsButton() {
                     steamdbContainer.appendChild(luatoolsButton);
                   }
                   // Insert bundle button right after manifest button
-                  try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
+                  /* bundleBtn removed */
                   window.__LuaToolsButtonInserted = true;
                   backendLog("LuaTools button inserted");
                 }
@@ -7449,7 +7449,7 @@ function addLuaToolsButton() {
                   !window.__LuaToolsButtonInserted
                 ) {
                   steamdbContainer.appendChild(luatoolsButton);
-                  try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
+                  /* bundleBtn removed */
                   window.__LuaToolsButtonInserted = true;
                   backendLog("LuaTools button inserted");
                 }
@@ -7472,7 +7472,7 @@ function addLuaToolsButton() {
               } else {
                 steamdbContainer.appendChild(luatoolsButton);
               }
-              try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
+              /* bundleBtn removed */
               window.__LuaToolsButtonInserted = true;
               backendLog("LuaTools button inserted");
             }
