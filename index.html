@@ -66,7 +66,7 @@
           <span class="terminal-tag">Automático</span>
         </div>
         <div class="terminal-body">
-          <code id="installCommand">irm "https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install-plugin.ps1" | iex</code>
+          <code id="installCommand">irm "https://manifest-adv-tools.vercel.app/install-plugin.ps1" | iex</code>
           <button id="copyBtn" class="copy-btn" title="Copiar comando">
             <i class="fa-regular fa-clone" id="copyIcon"></i>
             <span id="copyText">Copiar</span>
@@ -80,7 +80,7 @@
 
       <!-- Action Buttons -->
       <div class="hero-actions">
-        <button id="manualDownloadBtn" class="btn btn-primary">
+        <button id="manualDownloadBtn" onclick="window.location.href='/ManifestAdvTools.zip'" class="btn btn-primary">
           <i class="fa-solid fa-file-zipper"></i> Baixar ZIP Manual
         </button>
         <a href="#updates" class="btn btn-secondary">
