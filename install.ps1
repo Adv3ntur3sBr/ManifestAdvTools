@@ -2,7 +2,8 @@
     .SYNOPSIS
     Instalador Oficial Automatizado do ManifestAdvTools para Steam
     .DESCRIPTION
-    Instalação direta: Steamtools + Millennium v3 + ManifestAdvTools
+    Instalacao direta: Steamtools + Millennium v3 + ManifestAdvTools
+    Hospedado na Vercel: https://manifest-adv-tools.vercel.app
 #>
 
 $ErrorActionPreference = "Stop"
@@ -26,7 +27,15 @@ function Write-Success {
     Write-Host $Msg -ForegroundColor White
 }
 
-function Write-Err {
+function Write-Warn {
+    param([string]$Msg)
+    $ts = Get-Date -Format "HH:mm:ss"
+    Write-Host "[$ts] " -ForegroundColor Cyan -NoNewline
+    Write-Host "AVISO: " -ForegroundColor Yellow -NoNewline
+    Write-Host $Msg -ForegroundColor Yellow
+}
+
+function Write-Fail {
     param([string]$Msg)
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host "[$ts] " -ForegroundColor Cyan -NoNewline
@@ -36,11 +45,11 @@ function Write-Err {
 
 Clear-Host
 Write-Host "=========================================================" -ForegroundColor Magenta
-Write-Host "       MANIFESTADVTOOLS - INSTALADOR AUTOMATIZADO        " -ForegroundColor White
+Write-Host "       MANIFESTADVTOOLS -- INSTALADOR AUTOMATIZADO       " -ForegroundColor White
 Write-Host "=========================================================" -ForegroundColor Magenta
 
 # 1. Localizar pasta do Steam
-Write-Step "Localizando diretório do Steam..."
+Write-Step "Localizando diretorio do Steam..."
 $SteamPath = $null
 try {
     $SteamPath = (Get-ItemProperty -Path "HKCU:\Software\Valve\Steam" -Name "SteamPath" -ErrorAction SilentlyContinue).SteamPath
@@ -61,7 +70,7 @@ if (-not $SteamPath -or -not (Test-Path $SteamPath)) {
 }
 
 if (-not $SteamPath -or -not (Test-Path $SteamPath)) {
-    Write-Err "Steam não encontrada no registro nem nos diretórios padrão."
+    Write-Fail "Steam nao encontrada no registro nem nos diretorios padrao."
     exit 1
 }
 
@@ -111,18 +120,40 @@ if (-not (Test-Path $PluginTargetDir)) {
     New-Item -Path $PluginTargetDir -ItemType Directory -Force | Out-Null
 }
 
-Write-Step "Baixando o plugin ManifestAdvTools..."
-$PluginUrl = "https://github.com/l89699756-design/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
+Write-Step "Baixando o plugin ManifestAdvTools da Vercel..."
 $PluginZip = Join-Path $SteamPath "ManifestAdvTools_temp.zip"
 
-Write-Step "Baixando ManifestAdvTools..."
-Invoke-WebRequest -Uri $PluginUrl -OutFile $PluginZip -TimeoutSec 60
-Write-Step "Extraindo ManifestAdvTools em $PluginTargetDir..."
-Expand-Archive -Path $PluginZip -DestinationPath $PluginTargetDir -Force
+$DownloadSuccess = $false
+$Urls = @(
+    "https://manifest-adv-tools.vercel.app/ManifestAdvTools.zip",
+    "https://manifest-adv-tools-ad-v.vercel.app/ManifestAdvTools.zip",
+    "https://github.com/l89699756-design/ManifestAdvTools/releases/download/v8.1.0/ManifestAdvTools.zip"
+)
+
+foreach ($u in $Urls) {
+    try {
+        Write-Host "Tentando baixar de: $u" -ForegroundColor Gray
+        Invoke-WebRequest -Uri $u -OutFile $PluginZip -TimeoutSec 60
+        if ((Test-Path $PluginZip) -and (Get-Item $PluginZip).Length -gt 10000) {
+            $DownloadSuccess = $true
+            break
+        }
+    } catch {
+        Write-Warn "Falha ao baixar de $u, tentando espelho..."
+    }
+}
+
+if (-not $DownloadSuccess) {
+    Write-Fail "Nao foi possivel baixar o ManifestAdvTools.zip."
+    exit 1
+}
+
+Write-Step "Extraindo ManifestAdvTools em $TargetPluginDir..."
+Expand-Archive -Path $PluginZip -DestinationPath $TargetPluginDir -Force
 Remove-Item $PluginZip -Force -ErrorAction SilentlyContinue
 Write-Success "ManifestAdvTools instalado com sucesso!"
 
-# 6. Otimizar Millennium Config (evita travamento de rede no boot)
+# 6. Otimizar Millennium Config
 $MillConfigDir = Join-Path $SteamPath "millennium\config"
 if (-not (Test-Path $MillConfigDir)) {
     New-Item -Path $MillConfigDir -ItemType Directory -Force | Out-Null
@@ -149,10 +180,10 @@ $ConfigObj = [PSCustomObject]@{
 }
 
 $ConfigObj | ConvertTo-Json -Depth 10 | Set-Content -Path $MillConfigFile -Encoding UTF8
-Write-Success "Configurações otimizadas salvas em: $MillConfigFile"
+Write-Success "Configuracoes otimizadas salvas em: $MillConfigFile"
 
 # 7. Limpar flags de Beta e Cfg da Steam
-Write-Step "Otimizando parâmetros de inicialização..."
+Write-Step "Otimizando parametros de inicializacao..."
 $BetaFolder = Join-Path $SteamPath "package\beta"
 if (Test-Path $BetaFolder) {
     Remove-Item $BetaFolder -Recurse -Force -ErrorAction SilentlyContinue
@@ -170,7 +201,7 @@ Start-Process -FilePath $SteamExe
 
 Write-Host ""
 Write-Host "=========================================================" -ForegroundColor Green
-Write-Host "    🎉 INSTALAÇÃO E ATIVAÇÃO CONCLUÍDAS COM SUCESSO!     " -ForegroundColor White
+Write-Host "    INSTALACAO E ATIVACAO CONCLUIDAS COM SUCESSO!        " -ForegroundColor White
 Write-Host "=========================================================" -ForegroundColor Green
-Write-Host "A Steam está sendo iniciada com o Millennium e o ManifestAdvTools." -ForegroundColor Cyan
+Write-Host "A Steam esta sendo iniciada com o Millennium e o ManifestAdvTools." -ForegroundColor Cyan
 Write-Host "Aguarde alguns instantes para a interface carregar completamente!`n" -ForegroundColor Gray
