@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyText = document.getElementById("copyText");
   const installCmd = document.getElementById("installCommand");
 
+  // Adapt install command to current domain if hosted on Vercel or custom domain
+  if (installCmd && window.location.protocol.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1")) {
+    installCmd.textContent = `irm "${window.location.origin}/install-plugin.ps1" | iex`;
+  }
+
   const checkUpdateBtn = document.getElementById("checkUpdateBtn");
   const updateSpinner = document.getElementById("updateSpinner");
   const latestVerDisplay = document.getElementById("latestVerDisplay");
