@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
     Script Oficial de Reparo e Reinicializacao Limpa da Steam
     .DESCRIPTION

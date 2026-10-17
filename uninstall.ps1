@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
     Script Oficial de Desinstalacao Completa do ManifestAdvTools, Millennium e Steamtools
     .DESCRIPTION
