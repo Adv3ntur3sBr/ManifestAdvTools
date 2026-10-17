@@ -1,9 +1,10 @@
-﻿<#
+<#
     .SYNOPSIS
     Instalador Oficial Automatizado do ManifestAdvTools para Steam
     .DESCRIPTION
-    Instalação direta, limpa e estável: Steamtools + Millennium v3 + ManifestAdvTools
-    Sem congelamentos de inicialização, com suporte completo a Steam x64.
+    Instalacao dinamica — busca a versao MAIS RECENTE de cada ferramenta via GitHub API.
+    Steamtools (latest) + Millennium (latest) + ManifestAdvTools (latest)
+    Sem congelamentos de inicializacao, com suporte completo a Steam x64.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -40,6 +41,31 @@ function Write-Fail {
     Write-Host "ERR $Msg" -ForegroundColor Red
 }
 
+# Busca a URL de download do asset mais recente de um repositorio GitHub
+function Get-LatestReleaseUrl {
+    param(
+        [string]$Repo,
+        [string]$AssetPattern,
+        [string]$Fallback = ""
+    )
+    $apiUrl = "https://api.github.com/repos/$Repo/releases/latest"
+    try {
+        $wc = New-Object System.Net.WebClient
+        $wc.Headers.Add("User-Agent", "ManifestAdvTools-Installer/1.0")
+        $wc.Headers.Add("Accept", "application/vnd.github+json")
+        $json = $wc.DownloadString($apiUrl) | ConvertFrom-Json
+        $tag = $json.tag_name
+        Write-Step "  $Repo versao mais recente: $tag"
+        $asset = $json.assets | Where-Object { $_.name -match $AssetPattern } | Select-Object -First 1
+        if ($asset) { return $asset.browser_download_url }
+        if ($json.zipball_url) { return $json.zipball_url }
+    } catch {
+        Write-Warn "  API GitHub indisponivel para $Repo ($_ ). Usando fallback..."
+    }
+    if ($Fallback) { return $Fallback }
+    return $null
+}
+
 function Download-And-Extract {
     param(
         [string[]]$Urls,
@@ -55,20 +81,21 @@ function Download-And-Extract {
 
     $downloaded = $false
     foreach ($url in $Urls) {
+        if (-not $url) { continue }
         try {
-            Write-Step "Baixando $Name ($url)..."
+            Write-Step "Baixando $Name de: $url"
             $wc.DownloadFile($url, $tempZip)
             if ((Test-Path $tempZip) -and ((Get-Item $tempZip).Length -gt 1000)) {
                 $downloaded = $true
                 break
             }
         } catch {
-            Write-Warn "Falha ao baixar de $($url): $($_). Tentando próxima fonte..."
+            Write-Warn "Falha ao baixar de $($url): $($_). Tentando proxima fonte..."
         }
     }
 
     if (-not $downloaded) {
-        throw "Não foi possível baixar $Name de nenhuma fonte disponível."
+        throw "Nao foi possivel baixar $Name de nenhuma fonte disponivel."
     }
 
     Write-Step "Extraindo $Name em $DestFolder..."
@@ -83,8 +110,10 @@ function Download-And-Extract {
 
 Clear-Host
 Write-Host "=========================================================" -ForegroundColor Magenta
-Write-Host "       MANIFESTADVTOOLS — INSTALADOR AUTOMATIZADO        " -ForegroundColor White
-Write-Host "=========================================================" -ForegroundColor Magenta
+Write-Host "       MANIFESTADVTOOLS - INSTALADOR AUTOMATIZADO        " -ForegroundColor White
+Write-Host "       Sempre instala as versoes mais recentes!          " -ForegroundColor Gray
+Write-Host "========================================================="  -ForegroundColor Magenta
+Write-Host ""
 
 # 1. Localizar Steam
 Write-Step "Localizando diretório do Steam..."
@@ -142,30 +171,57 @@ if ($env:TEMP -and (Test-Path $env:TEMP)) {
     Get-ChildItem -Path $env:TEMP -Filter "*millennium*.sock" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
-# 3. Instalar Steamtools (OpenSteamTool)
-Write-Step "Verificando Steamtools (desbloqueador de manifestos)..."
+# ─────────────────────────────────────────────────────────────────────────────
+# RESOLUCAO DINAMICA DE VERSOES — consulta GitHub API antes de qualquer download
+# ─────────────────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Step "Buscando versoes mais recentes de todas as ferramentas via GitHub API..."
+
+$OstLatestUrl = Get-LatestReleaseUrl `
+    -Repo "madoiscool/lt_api_links" `
+    -AssetPattern "ost.*\.zip" `
+    -Fallback "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/steamtools.zip"
+
+$MillLatestUrl = Get-LatestReleaseUrl `
+    -Repo "SteamClientHomebrew/Millennium" `
+    -AssetPattern "windows.*x86_64.*\.zip|millennium.*windows.*\.zip" `
+    -Fallback "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/millennium.zip"
+
+$PluginLatestUrl = Get-LatestReleaseUrl `
+    -Repo "Adv3ntur3sBr/ManifestAdvTools" `
+    -AssetPattern "ManifestAdvTools.*\.zip" `
+    -Fallback "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/ManifestAdvTools.zip"
+
+Write-Host ""
+
+# 3. Instalar Steamtools (OpenSteamTool) — versao mais recente
+Write-Step "Instalando Steamtools (desbloqueador de manifestos) — versao mais recente..."
 $OstUrls = @(
-    "https://github.com/madoiscool/lt_api_links/releases/download/ost-148/ost.zip",
+    $OstLatestUrl,
     "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/steamtools.zip"
-)
+) | Where-Object { $_ }
 try {
     Download-And-Extract -Urls $OstUrls -DestFolder $SteamPath -Name "Steamtools"
 } catch {
-    Write-Warn "Aviso ao instalar Steamtools: $_. Continuando..."
+    Write-Warn "Aviso ao instalar Steamtools: $_. Continuando sem ele..."
 }
 
-# 4. Instalar Millennium v3
-Write-Step "Instalando Millennium v3..."
+Write-Host ""
+
+# 4. Instalar Millennium — versao mais recente
+Write-Step "Instalando Millennium — versao mais recente..."
 $MillenniumUrls = @(
-    "https://github.com/SteamClientHomebrew/Millennium/releases/download/v3.4.1/millennium-v3.4.1-windows-x86_64.zip",
+    $MillLatestUrl,
     "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/millennium.zip"
-)
+) | Where-Object { $_ }
 try {
-    Download-And-Extract -Urls $MillenniumUrls -DestFolder $SteamPath -Name "Millennium v3"
+    Download-And-Extract -Urls $MillenniumUrls -DestFolder $SteamPath -Name "Millennium"
 } catch {
-    Write-Fail "Erro crítico ao baixar Millennium: $_"
+    Write-Fail "Erro critico ao baixar Millennium: $_"
     exit 1
 }
+
+Write-Host ""
 
 # 5. Instalar o Plugin ManifestAdvTools (SEM duplicar diretórios para não travar a Steam)
 Write-Step "Instalando plugin ManifestAdvTools..."
@@ -184,9 +240,9 @@ if (Test-Path $DestPlugin) {
 }
 
 $PluginUrls = @(
-    "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/latest/download/ManifestAdvTools.zip",
+    $PluginLatestUrl,
     "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/ManifestAdvTools.zip"
-)
+) | Where-Object { $_ }
 
 try {
     Download-And-Extract -Urls $PluginUrls -DestFolder $DestPlugin -Name "ManifestAdvTools"
@@ -194,6 +250,8 @@ try {
     Write-Fail "Falha ao baixar plugin: $_"
     exit 1
 }
+
+Write-Host ""
 
 # 6. Ativar ManifestAdvTools nas configurações do Millennium (preservando todas as configurações)
 Write-Step "Configurando Millennium de forma segura..."
