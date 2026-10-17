@@ -281,8 +281,10 @@ function ReorderApis(params, contentScriptQuery)
 end
 
 function CancelAddViaLuaTools(appid)
-    -- No-op cancel stub; download is synchronous in Lua
-    return json_ok({ success = true })
+    if type(appid) == "table" then appid = appid.appid end
+    local ok, res = pcall(downloads.cancel_add, tonumber(appid))
+    if not ok then return json_err(res) end
+    return json_ok(res)
 end
 
 function CheckApisForApp(appid)
@@ -335,7 +337,7 @@ end
 function GetIconDataUrl()
     local icon_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.png")
     if not fs.exists(icon_path) then
-        icon_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.png")
+        icon_path = fs.join(paths.get_plugin_dir(), "public", "advgametool-icon.png")
     end
     if not fs.exists(icon_path) then
         icon_path = fs.join(paths.get_plugin_dir(), "public", "luatools-icon.png")
@@ -439,7 +441,10 @@ function GetApplyFixStatus(appid)
 end
 
 function CancelApplyFix(appid)
-    return json_ok({ success = true })
+    if type(appid) == "table" then appid = appid.appid end
+    local ok, res = pcall(fixes.cancel_apply_fix, tonumber(appid))
+    if not ok then return json_err(res) end
+    return json_ok(res)
 end
 
 -- ── OnlineFix Bundle Download ─────────────────────────────────────────────────
@@ -467,8 +472,6 @@ function GetBundleStatus(appid)
     return json_ok(res)
 end
 
-
-
 function UninstallFix(appid)
     if type(appid) == "table" then appid = appid.appid end
     local ok, res = pcall(fixes.uninstall_fix, tonumber(appid))
@@ -476,20 +479,37 @@ function UninstallFix(appid)
     return json_ok(res)
 end
 
-function UnFixGame(appid, installPath, fixDate)
-    if type(appid) == "table" then
-        installPath = appid.installPath; fixDate = appid.fixDate; appid = appid.appid
+function UnFixGame(arg1, arg2, arg3, arg4)
+    local appid, installPath, fixDate
+    if type(arg1) == "table" then
+        appid = arg1.appid
+        installPath = arg1.installPath
+        fixDate = arg1.fixDate
+    else
+        appid = arg1
+        if type(arg4) == "string" and arg4 ~= "" then
+            fixDate = arg3
+            installPath = arg4
+        elseif type(arg3) == "string" and arg3 ~= "" then
+            installPath = arg3
+        end
     end
-    -- Stub - unfix logic not yet ported
-    return json_ok({ success = false, error = "Not yet implemented" })
+    local ok, res = pcall(fixes.unfix_game, tonumber(appid), installPath, fixDate)
+    if not ok then return json_err(res) end
+    return json_ok(res)
 end
 
 function GetUnfixStatus(appid)
-    return json_ok({ success = true, state = { status = "done" } })
+    if type(appid) == "table" then appid = appid.appid end
+    local ok, res = pcall(fixes.get_unfix_status, tonumber(appid))
+    if not ok then return json_err(res) end
+    return json_ok(res)
 end
 
 function GetInstalledFixes()
-    return json_ok({ success = true, fixes = {} })
+    local ok, res = pcall(fixes.get_installed_fixes)
+    if not ok then return json_err(res) end
+    return json_ok(res)
 end
 
 function GetInstalledLuaScripts()
@@ -552,8 +572,7 @@ function OpenExternalUrl(url)
     return json_ok({ success = true })
 end
 
-function GetSettingsConfig(contentScriptQuery)
-    logger.log("GetSettingsConfig CALLED")
+function GetSettingsConfig()
     local ok, payload = pcall(settings_manager.get_settings_payload)
     if not ok then
         logger.warn("GetSettingsConfig failed: " .. tostring(payload))
@@ -672,61 +691,13 @@ function GetTranslations(language)
 end
 
 function GetAvailableThemes()
-    return json_ok({ success = true, themes = {} })
+    return GetThemes()
 end
 
--- ── Return module table ───────────────────────────────────────────────────────
+-- ── Return lifecycle table ────────────────────────────────────────────────────
 
-local exported = {
-    on_load                    = on_load,
-    on_unload                  = on_unload,
-    on_frontend_loaded         = on_frontend_loaded,
-    Logger                     = Logger,
-    GetPluginDir               = GetPluginDir,
-    InitApis                   = InitApis,
-    GetInitApisMessage         = GetInitApisMessage,
-    FetchFreeApisNow           = FetchFreeApisNow,
-    CheckForUpdatesNow         = CheckForUpdatesNow,
-    RestartSteam               = RestartSteam,
-    HasLuaToolsForApp          = HasLuaToolsForApp,
-    StartAddViaLuaTools        = StartAddViaLuaTools,
-    GetAddViaLuaToolsStatus    = GetAddViaLuaToolsStatus,
-    GetApiList                 = GetApiList,
-    AddCustomApi               = AddCustomApi,
-    GetAllApis                 = GetAllApis,
-    ToggleApi                  = ToggleApi,
-    RemoveApi                  = RemoveApi,
-    RenameApi                  = RenameApi,
-    ReorderApis                = ReorderApis,
-    CancelAddViaLuaTools       = CancelAddViaLuaTools,
-    CheckApisForApp            = CheckApisForApp,
-    GetMorrenusStats           = GetMorrenusStats,
-    StartAddViaLuaToolsFromUrl = StartAddViaLuaToolsFromUrl,
-    GetIconDataUrl             = GetIconDataUrl,
-    GetGamesDatabase           = GetGamesDatabase,
-    ReadLoadedApps             = ReadLoadedApps,
-    DismissLoadedApps          = DismissLoadedApps,
-    DeleteLuaToolsForApp       = DeleteLuaToolsForApp,
-    CheckForFixes              = CheckForFixes,
-    ApplyGameFix               = ApplyGameFix,
-    GetApplyFixStatus          = GetApplyFixStatus,
-    CancelApplyFix             = CancelApplyFix,
-    StartAddWithOnlineFix      = StartAddWithOnlineFix,
-    GetBundleStatus            = GetBundleStatus,
-    UninstallFix               = UninstallFix,
-    UnFixGame                  = UnFixGame,
-    GetUnfixStatus             = GetUnfixStatus,
-    GetInstalledFixes          = GetInstalledFixes,
-    GetInstalledLuaScripts     = GetInstalledLuaScripts,
-    GetGameInstallPath         = GetGameInstallPath,
-    OpenGameFolder             = OpenGameFolder,
-    OpenExternalUrl            = OpenExternalUrl,
-    GetSettingsConfig          = GetSettingsConfig,
-    GetThemes                  = GetThemes,
-    ApplySettingsChanges       = ApplySettingsChanges,
-    GetAvailableLocales        = GetAvailableLocales,
-    GetTranslations            = GetTranslations,
-    GetAvailableThemes         = GetAvailableThemes,
+return {
+    on_load            = on_load,
+    on_unload          = on_unload,
+    on_frontend_loaded = on_frontend_loaded,
 }
-setmetatable(exported, { __index = _G })
-return exported

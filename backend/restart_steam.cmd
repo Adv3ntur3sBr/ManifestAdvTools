@@ -1,32 +1,39 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+rem Wait 1 second before killing Steam so the IPC response can finish
 ping 127.0.0.1 -n 2 >nul
 
-set "STEAM_DIR="
-for /f "tokens=2,*" %%A in ('reg query "HKEY_CURRENT_USER\Software\Valve\Steam" /v SteamPath 2^>nul ^| find "SteamPath"') do set "STEAM_DIR=%%B"
+rem Find Steam install path from registry
+set "RAW_STEAM_DIR="
+for /f "tokens=2,*" %%A in ('reg query "HKCU\Software\Valve\Steam" /v SteamPath 2^>nul ^| find "SteamPath"') do set "RAW_STEAM_DIR=%%B"
 
-if defined STEAM_DIR (
-    set "STEAM_DIR=!STEAM_DIR:/=\!"
-) else (
+if defined RAW_STEAM_DIR (
+    set "STEAM_DIR=!RAW_STEAM_DIR:/=\!"
+)
+
+if not defined STEAM_DIR (
     set "STEAM_DIR=C:\Program Files (x86)\Steam"
 )
 
-set "STEAM_EXE=!STEAM_DIR!\steam.exe"
+rem Find steam executable
+set "STEAM_EXE=!STEAM_DIR!\Steam.exe"
 if not exist "!STEAM_EXE!" (
-    set "STEAM_EXE=C:\Program Files (x86)\Steam\steam.exe"
+    set "STEAM_EXE=C:\Program Files (x86)\Steam\Steam.exe"
 )
 
+rem Kill Steam processes cleanly / forcefully
 taskkill /F /IM steam.exe >nul 2>&1
 taskkill /F /IM steamwebhelper.exe >nul 2>&1
-taskkill /F /IM millennium* >nul 2>&1
 
-ping 127.0.0.1 -n 3 >nul
+rem Wait for processes to fully exit (reliable ping delay, works with redirection)
+ping 127.0.0.1 -n 4 >nul
 
+rem Launch Steam back up
 if exist "!STEAM_EXE!" (
     start "" "!STEAM_EXE!"
 ) else (
-    start "" "steam://open/main"
+    start "" steam://open/main
 )
 
 exit

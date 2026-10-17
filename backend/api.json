@@ -1,0 +1,46 @@
+{
+    "api_list": [
+        {
+            "name": "Raian Manifests",
+            "url": "https://raw.githubusercontent.com/raianffyt2222/reporaianlmm/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Sushi",
+            "url": "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "GOG Pirate Repo",
+            "url": "https://raw.githubusercontent.com/Mysticf1/GOG-Pirate-Lua-Manifest-Repo/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "LuaDepot Games",
+            "url": "https://raw.githubusercontent.com/LuaDepot/LuaDeopot-games/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Angel Manifest",
+            "url": "https://raw.githubusercontent.com/Angelpro09xd/manifestrepo/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Morrenus",
+            "url": "https://hubcapmanifest.com/api/v1/manifest/<appid>?api_key=<moapikey>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        }
+    ]
+}

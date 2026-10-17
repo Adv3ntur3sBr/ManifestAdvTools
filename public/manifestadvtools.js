@@ -1702,7 +1702,7 @@
         title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:22px;color:${colors.text};font-weight:600;`;
         const titleIcon = document.createElement("img");
         titleIcon.style.cssText = "width:24px;height:24px;border-radius:4px;";
-        titleIcon.alt = "ManifestAdvTools";
+        titleIcon.alt = "AdvgameTool";
         try {
           Millennium.callServerMethod("ManifestAdvTools", "GetIconDataUrl", {
             contentScriptQuery: "",
@@ -1712,19 +1712,19 @@
               titleIcon.src =
                 p && p.success && p.dataUrl
                   ? p.dataUrl
-                  : "LuaTools/manifestadvtools-icon.png";
+                  : "LuaTools/advgametool-icon.png";
             } catch (_) {
-              titleIcon.src = "LuaTools/manifestadvtools-icon.png";
+              titleIcon.src = "LuaTools/advgametool-icon.png";
             }
           });
         } catch (_) {
-          titleIcon.src = "LuaTools/manifestadvtools-icon.png";
+          titleIcon.src = "LuaTools/advgametool-icon.png";
         }
         titleIcon.onerror = function () {
           this.style.display = "none";
         };
         const titleText = document.createElement("span");
-        titleText.textContent = t("menu.title", "ManifestAdvTools");
+        titleText.textContent = t("menu.title", "AdvgameTool");
         title.appendChild(titleIcon);
         title.appendChild(titleText);
 
@@ -1818,7 +1818,7 @@
 
         const discordBtn = createIconButton(
           "lt-settings-discord",
-          "fa-solid fa-globe",
+          "fa-brands fa-discord",
           "menu.discord",
           "Discord",
         );
@@ -1861,7 +1861,7 @@
         removeBtn.style.cssText = `display:none;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.3);border-radius:10px;color:#ff6b6b;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s ease;cursor:pointer;text-align:center;`;
         removeBtn.innerHTML =
           '<i class="fa-solid fa-trash-can" style="font-size:14px;"></i><span>' +
-          t("menu.removeLuaTools", "Remover via ManifestAdvTools") +
+          t("menu.removeLuaTools", "Remover via AdvgameTool") +
           "</span>";
         removeBtn.onmouseover = function () {
           this.style.background = "rgba(255,80,80,0.18)";
@@ -1885,7 +1885,7 @@
           "Menu de Correções",
           "fa-wrench",
         );
-        // fixesMenuBtn removed
+        if (isGamePage) cardGrid.appendChild(fixesMenuBtn);
 
         const checkBtn = createCardButton(
           "lt-settings-check",
@@ -1902,14 +1902,6 @@
           "fa-server",
         );
         cardGrid.appendChild(fetchApisBtn);
-
-        const reloadUiCardBtn = createCardButton(
-          "lt-settings-reload-ui",
-          "menu.reloadUi",
-          "Recarregar Visual (RL)",
-          "fa-arrows-rotate",
-        );
-        cardGrid.appendChild(reloadUiCardBtn);
 
         const restartSteamCardBtn = createCardButton(
           "lt-settings-restart-steam",
@@ -1954,7 +1946,7 @@
                     payload && payload.message
                       ? String(payload.message)
                       : lt("No updates available.");
-                  ShowLuaToolsAlert("ManifestAdvTools", msg);
+                  ShowLuaToolsAlert("AdvgameTool", msg);
                 } catch (_) {}
               });
             } catch (_) {}
@@ -1962,7 +1954,7 @@
         }
 
         if (discordBtn) {
-          discordBtn.title = "Sobre o ManifestAdvTools";
+          discordBtn.title = "Sobre o AdvgameTool";
           discordBtn.innerHTML = '<i class="fa-solid fa-gamepad"></i>';
           discordBtn.addEventListener("click", function (e) {
             e.preventDefault();
@@ -1971,16 +1963,8 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.1.1\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Mais de 5.800 jogos compatíveis\n• Suporte nativo a OnlineFix\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.2.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
-          });
-        }
-
-        if (typeof reloadUiCardBtn !== "undefined" && reloadUiCardBtn) {
-          reloadUiCardBtn.addEventListener("click", function (e) {
-            e.preventDefault();
-            try { overlay.remove(); } catch (_) {}
-            window.location.reload();
           });
         }
 
@@ -2016,7 +2000,7 @@
                       ? String(payload.error)
                       : lt("Failed to load free APIs.");
                   const text = ok ? successText : failText;
-                  ShowLuaToolsAlert("ManifestAdvTools", text);
+                  ShowLuaToolsAlert("AdvgameTool", text);
                 } catch (_) {}
               });
             } catch (_) {}
@@ -2063,7 +2047,7 @@
                   "menu.error.noAppId",
                   "Could not determine game AppID",
                 );
-                ShowLuaToolsAlert("ManifestAdvTools", errText);
+                ShowLuaToolsAlert("AdvgameTool", errText);
                 return;
               }
 
@@ -2107,7 +2091,7 @@
                     "menu.error.getPath",
                     "Error getting game path",
                   );
-                  ShowLuaToolsAlert("ManifestAdvTools", errorText);
+                  ShowLuaToolsAlert("AdvgameTool", errorText);
                 });
             } catch (err) {
               backendLog("ManifestAdvTools: Fixes Menu button error: " + err);
@@ -2145,7 +2129,8 @@
                 if (exists) {
                   const doDelete = function () {
                     try {
-                      Millennium.callServerMethod("ManifestAdvTools",
+                      Millennium.callServerMethod(
+                        "ManifestAdvTools",
                         "DeleteLuaToolsForApp",
                         {
                           appid,
@@ -2162,7 +2147,7 @@
                               "menu.remove.success",
                               "LuaTools removed for this app.",
                             );
-                            ShowLuaToolsAlert("ManifestAdvTools", successText);
+                            ShowLuaToolsAlert("AdvgameTool", successText);
                           } catch (err) {
                             backendLog(
                               "ManifestAdvTools: post-delete cleanup failed: " + err,
@@ -2176,7 +2161,7 @@
                           );
                           const errMsg =
                             err && err.message ? err.message : failureText;
-                          ShowLuaToolsAlert("ManifestAdvTools", errMsg);
+                          ShowLuaToolsAlert("AdvgameTool", errMsg);
                         });
                     } catch (err) {
                       backendLog("ManifestAdvTools: doDelete failed: " + err);
@@ -2328,7 +2313,7 @@
 
   function askRestartConfirmation() {
     showLuaToolsConfirm(
-      "ManifestAdvTools",
+      "AdvgameTool",
       lt("Deseja reiniciar a Steam agora para aplicar as alterações?"),
       function () {
         try {
@@ -2606,7 +2591,7 @@
     titleIcon.className = "fa-solid fa-wrench";
     titleIcon.style.cssText = `color:${colors.accent};font-size:20px;`;
     const titleText = document.createElement("span");
-    titleText.textContent = t("fixes.title", "ManifestAdvTools · Menu de Correções");
+    titleText.textContent = t("fixes.title", "AdvgameTool · Menu de Correções");
     title.appendChild(titleIcon);
     title.appendChild(titleText);
 
@@ -2639,7 +2624,7 @@
 
     const discordBtn = createIconButton(
       "lt-fixes-discord",
-      "fa-solid fa-globe",
+      "fa-brands fa-discord",
       "menu.discord",
       "Discord",
     );
@@ -3037,7 +3022,7 @@
       try {
         overlay.remove();
       } catch (_) {}
-      const url = "https://manifest-adv-tools.vercel.app";
+      const url = "https://discord.gg/luatools";
       try {
         Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", {
           url,
@@ -3075,12 +3060,12 @@
                   errorKey.startsWith("common."))
                   ? t(errorKey)
                   : errorKey || lt("Failed to start un-fix");
-              ShowLuaToolsAlert("ManifestAdvTools", errorMsg);
+              ShowLuaToolsAlert("AdvgameTool", errorMsg);
             }
           })
           .catch(function () {
             const msg = lt("Error starting un-fix");
-            ShowLuaToolsAlert("ManifestAdvTools", msg);
+            ShowLuaToolsAlert("AdvgameTool", msg);
           });
       } catch (err) {
         backendLog("ManifestAdvTools: Un-Fix start error: " + err);
@@ -3162,12 +3147,12 @@
             payload && payload.error
               ? String(payload.error)
               : lt("Failed to check for fixes.");
-          ShowLuaToolsAlert("ManifestAdvTools", errText);
+          ShowLuaToolsAlert("AdvgameTool", errText);
         }
       })
       .catch(function () {
         const msg = lt("Error checking for fixes");
-        ShowLuaToolsAlert("ManifestAdvTools", msg);
+        ShowLuaToolsAlert("AdvgameTool", msg);
       })
       .finally(function () {
         clearInterval(progressInterval);
@@ -3192,7 +3177,7 @@
       // Check if we have the game install path
       if (!window.__LuaToolsGameInstallPath) {
         const msg = lt("Game install path not found");
-        ShowLuaToolsAlert("ManifestAdvTools", msg);
+        ShowLuaToolsAlert("AdvgameTool", msg);
         return;
       }
 
@@ -3222,18 +3207,18 @@
                   errorKey.startsWith("common."))
                   ? t(errorKey)
                   : errorKey || lt("Failed to start fix download");
-              ShowLuaToolsAlert("ManifestAdvTools", errorMsg);
+              ShowLuaToolsAlert("AdvgameTool", errorMsg);
             }
           } catch (err) {
             backendLog("ManifestAdvTools: ApplyGameFix response error: " + err);
             const msg = lt("Error applying fix");
-            ShowLuaToolsAlert("ManifestAdvTools", msg);
+            ShowLuaToolsAlert("AdvgameTool", msg);
           }
         })
         .catch(function (err) {
           backendLog("ManifestAdvTools: ApplyGameFix error: " + err);
           const msg = lt("Error applying fix");
-          ShowLuaToolsAlert("ManifestAdvTools", msg);
+          ShowLuaToolsAlert("AdvgameTool", msg);
         });
     } catch (err) {
       backendLog("ManifestAdvTools: applyFix error: " + err);
@@ -3316,7 +3301,7 @@
               msgEl2.textContent = msgEl2.dataset.last;
             backendLog("ManifestAdvTools: CancelApplyFix response error: " + err);
             const msg = lt("Failed to cancel fix download");
-            ShowLuaToolsAlert("ManifestAdvTools", msg);
+            ShowLuaToolsAlert("AdvgameTool", msg);
           }
         })
         .catch(function (err) {
@@ -3328,7 +3313,7 @@
             msgEl2.textContent = msgEl2.dataset.last;
           backendLog("ManifestAdvTools: CancelApplyFix error: " + err);
           const msg = lt("Failed to cancel fix download");
-          ShowLuaToolsAlert("ManifestAdvTools", msg);
+          ShowLuaToolsAlert("AdvgameTool", msg);
         });
     };
     btnRow.appendChild(cancelBtn);
@@ -3627,43 +3612,8 @@
       return Promise.reject(new Error(lt("LuaTools backend unavailable")));
     }
 
-    const defaultFallback = {
-      schemaVersion: 1,
-      schema: [
-        {
-          key: "general",
-          label: "General",
-          description: "ManifestAdvTools preferences.",
-          options: [
-            { key: "useSteamLanguage", label: "Use Steam Language", type: "toggle", default: true, metadata: { yesLabel: "Yes", noLabel: "No" } },
-            { key: "language", label: "Language", type: "select", default: "pt-BR", metadata: { dynamicChoices: "locales" } },
-            { key: "theme", label: "Theme", type: "select", default: "original", metadata: { dynamicChoices: "themes" } },
-            { key: "fastDownload", label: "Fast Download", type: "toggle", default: true, metadata: { yesLabel: "Yes", noLabel: "No" } },
-            { key: "morrenusApiKey", label: "Morrenus API Key", type: "text", default: "", metadata: { placeholder: "Enter API key..." } }
-          ]
-        }
-      ],
-      values: {
-        general: {
-          useSteamLanguage: true,
-          language: "pt-BR",
-          theme: "original",
-          fastDownload: true,
-          morrenusApiKey: ""
-        }
-      },
-      language: "pt-BR",
-      locales: [{ code: "pt-BR", name: "Portuguese (Brazil)", nativeName: "Português (Brasil)" }, { code: "en", name: "English", nativeName: "English" }],
-      translations: {},
-      lastFetched: Date.now()
-    };
-
-    return Promise.race([
-      Millennium.callServerMethod("ManifestAdvTools", "GetSettingsConfig", { contentScriptQuery: "" }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
-    ]).catch(function(err) {
-      console.warn("ManifestAdvTools: GetSettingsConfig timed out or failed, using fallback:", err);
-      return { success: true, ...defaultFallback };
+    return Millennium.callServerMethod("ManifestAdvTools", "GetSettingsConfig", {
+      contentScriptQuery: "",
     }).then(function (res) {
       const payload = typeof res === "string" ? JSON.parse(res) : res;
       if (!payload || payload.success !== true) {
@@ -3756,7 +3706,7 @@
     const title = document.createElement("div");
     const settingsTitleColors = getThemeColors();
     title.style.cssText = `font-size:22px;color:${settingsTitleColors.text};font-weight:600;display:flex;align-items:center;gap:10px;`;
-    title.innerHTML = `<i class="fa-solid fa-gamepad" style="color:${settingsTitleColors.accent};font-size:22px;"></i><span>${t("settings.title", "ManifestAdvTools · Configurações")}</span>`;
+    title.innerHTML = `<i class="fa-solid fa-gamepad" style="color:${settingsTitleColors.accent};font-size:22px;"></i><span>${t("settings.title", "AdvgameTool · Configurações")}</span>`;
 
     const iconButtons = document.createElement("div");
     iconButtons.style.cssText = "display:flex;gap:12px;";
@@ -3765,8 +3715,8 @@
     discordIconBtn.href = "#";
     const discordBtnColors = getThemeColors();
     discordIconBtn.style.cssText = `display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(${discordBtnColors.rgbString},0.08);border:1px solid ${discordBtnColors.border};border-radius:8px;color:${discordBtnColors.accent};font-size:16px;text-decoration:none;transition:all 0.2s ease;cursor:pointer;`;
-    discordIconBtn.innerHTML = '<i class="fa-solid fa-globe"></i>';
-    discordIconBtn.title = t("menu.discord", "Site Oficial");
+    discordIconBtn.innerHTML = '<i class="fa-brands fa-discord"></i>';
+    discordIconBtn.title = t("menu.discord", "Discord");
     discordIconBtn.onmouseover = function () {
       const c = getThemeColors();
       this.style.background = `rgba(${c.rgbString},0.18)`;
@@ -3784,7 +3734,7 @@
     discordIconBtn.onclick = function (e) {
       e.preventDefault();
       try {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://manifest-adv-tools.vercel.app" });
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://discord.gg/luatools" });
       } catch (_) {}
     };
     iconButtons.appendChild(discordIconBtn);
@@ -3818,7 +3768,7 @@
     const TABS = [
       { id: "general", icon: "fa-sliders", labelKey: "settings.tab.general", labelFallback: "Geral" },
       { id: "apis", icon: "fa-plug", labelKey: "settings.tab.apis", labelFallback: "Fontes de API" },
-      
+      { id: "fixes", icon: "fa-wrench", labelKey: "settings.tab.fixes", labelFallback: "Correções" },
       { id: "luas", icon: "fa-gamepad", labelKey: "settings.tab.luas", labelFallback: "Jogos Instalados" },
       { id: "about", icon: "fa-circle-info", labelKey: "settings.tab.about", labelFallback: "Sobre" },
     ];
@@ -4010,7 +3960,7 @@
       } else if (tabId === "luas") {
         searchInput.placeholder = t("settings.search.luas", "Pesquisar jogos instalados...");
       } else {
-        searchInput.placeholder = t("settings.search.about", "Pesquisar recursos do ManifestAdvTools...");
+        searchInput.placeholder = t("settings.search.about", "Pesquisar recursos do AdvgameTool...");
       }
 
       applySearchFilter();
@@ -4177,7 +4127,7 @@
       refreshBtn.title = t("settings.refresh", "Refresh");
       saveBtn.title = t("settings.save", "Save Settings");
       backBtn.title = t("Back", "Back");
-      discordIconBtn.title = t("menu.discord", "Site Oficial");
+      discordIconBtn.title = t("menu.discord", "Discord");
       closeIconBtn.title = t("settings.close", "Close");
     }
     applyStaticTranslations();
@@ -5673,7 +5623,7 @@
       const loadingLuaColors = getThemeColors();
       container.innerHTML =
         `<div style="padding:16px;text-align:center;color:${loadingLuaColors.textSecondary};font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>` +
-        t("settings.installedLua.loading", "Buscando jogos adicionados via ManifestAdvTools...") +
+        t("settings.installedLua.loading", "Buscando jogos adicionados via AdvgameTool...") +
         "</div>";
 
       Millennium.callServerMethod("ManifestAdvTools", "GetInstalledLuaScripts", {
@@ -5828,10 +5778,10 @@
         if (luaDeleteBtn.dataset.busy === "1") return;
 
         showLuaToolsConfirm(
-          script.gameName || "ManifestAdvTools",
+          script.gameName || "AdvgameTool",
           t(
             "settings.installedLua.deleteConfirm",
-            "Remover via ManifestAdvTools para este jogo?",
+            "Remover via AdvgameTool para este jogo?",
           ),
           function () {
             // User confirmed
@@ -5849,7 +5799,7 @@
                   typeof res === "string" ? JSON.parse(res) : res;
                 if (!response || !response.success) {
                   ShowLuaToolsAlert(
-                    "ManifestAdvTools",
+                    "AdvgameTool",
                     t(
                       "settings.installedLua.deleteError",
                       "Falha ao remover o manifesto do jogo.",
@@ -5876,7 +5826,7 @@
               })
               .catch(function (err) {
                 ShowLuaToolsAlert(
-                  "ManifestAdvTools",
+                  "AdvgameTool",
                   t(
                     "settings.installedLua.deleteError",
                     "Falha ao remover o manifesto do jogo.",
@@ -5913,7 +5863,7 @@
 
       const logoImg = document.createElement("img");
       logoImg.style.cssText = "width:60px;height:60px;border-radius:12px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));";
-      logoImg.src = "LuaTools/manifestadvtools-icon.png";
+      logoImg.src = "LuaTools/advgametool-icon.png";
       logoImg.onerror = function() { this.style.display = "none"; };
       try {
         Millennium.callServerMethod("ManifestAdvTools", "GetIconDataUrl", {}).then(function(res) {
@@ -5926,7 +5876,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.1.1";
+      heroTitle.textContent = "ManifestAdvTools v8.2.0";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -5990,14 +5940,14 @@
       actGrid.appendChild(createActionButton("Buscar Atualizações", "fa-cloud-arrow-down", function() {
         Millennium.callServerMethod("ManifestAdvTools", "CheckForUpdatesNow", {}).then(function(res) {
           const p = typeof res === "string" ? JSON.parse(res) : res;
-          ShowLuaToolsAlert("ManifestAdvTools", p && p.message ? p.message : "Nenhuma atualização disponível.");
+          ShowLuaToolsAlert("AdvgameTool", p && p.message ? p.message : "Nenhuma atualização disponível.");
         });
       }));
 
       actGrid.appendChild(createActionButton("Sincronizar APIs", "fa-server", function() {
         Millennium.callServerMethod("ManifestAdvTools", "FetchFreeApisNow", {}).then(function(res) {
           const p = typeof res === "string" ? JSON.parse(res) : res;
-          ShowLuaToolsAlert("ManifestAdvTools", p && p.success ? `APIs gratuitas carregadas: ${p.count}` : "Falha ao carregar APIs.");
+          ShowLuaToolsAlert("AdvgameTool", p && p.success ? `APIs gratuitas carregadas: ${p.count}` : "Falha ao carregar APIs.");
         });
       }));
 
@@ -6006,11 +5956,8 @@
         askRestartConfirmation();
       }));
 
-      actGrid.appendChild(createActionButton("Site Oficial", "fa-solid fa-globe", function() {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://manifest-adv-tools.vercel.app" });
-      }));
-      actGrid.appendChild(createActionButton("GitHub", "fa-brands fa-github", function() {
-        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://github.com/Adv3ntur3sBr/ManifestAdvTools" });
+      actGrid.appendChild(createActionButton("Comunidade Discord", "fa-brands fa-discord", function() {
+        Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", { url: "https://discord.gg/luatools" });
       }));
 
       actionsCard.appendChild(actGrid);
@@ -6023,8 +5970,8 @@
       setStatus(t("settings.loading", "Loading settings..."), "#c7d5e0");
       saveBtn.dataset.disabled = "1";
       saveBtn.style.opacity = "0.6";
-      panelGeneral.innerHTML =
-        '<div style="padding:20px;color:#c7d5e0;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>' +
+      contentWrap.innerHTML =
+        '<div style="padding:20px;color:#c7d5e0;">' +
         t("common.status.loading", "Loading...") +
         "</div>";
 
@@ -6047,7 +5994,7 @@
             err && err.message
               ? err.message
               : t("settings.error", "Failed to load settings.");
-          panelGeneral.innerHTML =
+          contentWrap.innerHTML =
             '<div style="padding:20px;color:#ff5c5c;">' + message + "</div>";
           setStatus(
             t("common.status.error", "Error") + ": " + message,
@@ -6249,7 +6196,7 @@
 
     discordIconBtn.addEventListener("click", function (e) {
       e.preventDefault();
-      const url = "https://manifest-adv-tools.vercel.app";
+      const url = "https://discord.gg/luatools";
       try {
         Millennium.callServerMethod("ManifestAdvTools", "OpenExternalUrl", {
           url,
@@ -6844,7 +6791,7 @@
       // Update Add via ADV Tools button
       const luatoolsBtn = document.querySelector(".luatools-button");
       if (luatoolsBtn) {
-        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
+        const addViaText = lt("⚡ Adicionar (AdvgameTool)");
         luatoolsBtn.title = addViaText;
         luatoolsBtn.setAttribute("data-tooltip-text", addViaText);
         const span = luatoolsBtn.querySelector("span");
@@ -6943,7 +6890,7 @@
     var headerText = document.createElement("div");
     var headerTitle = document.createElement("div");
     headerTitle.style.cssText = "font-size:17px;font-weight:700;color:" + theme.text + ";";
-    headerTitle.textContent = "ManifestAdvTools Bundle";
+    headerTitle.textContent = "AdvgameTool Bundle";
     var headerSub = document.createElement("div");
     headerSub.style.cssText = "font-size:12px;color:" + theme.textSecondary + ";margin-top:3px;";
     headerSub.textContent = lt("Downloading Manifest + OnlineFix", "Downloading Manifest + OnlineFix");
@@ -7073,7 +7020,7 @@
             if (fs === "done") {
               label = "✓ " + lt("Tudo pronto! Jogo e OnlineFix adicionados à Steam.", "All done! Game & OnlineFix added to Steam.");
             } else if (fs === "not_available") {
-              label = "✓ " + lt("Manifesto instalado com sucesso!", "Manifest installed successfully!");
+              label = "✓ " + lt("Manifesto instalado com sucesso! (Sem OnlineFix para este jogo)", "Manifest installed! (No OnlineFix available for this game)");
             } else {
               label = "✓ " + lt("Manifesto instalado com sucesso!", "Manifest installed successfully!");
             }
@@ -7180,7 +7127,7 @@ function addLuaToolsButton() {
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ManifestAdvTools"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9.94 3.06l-2.12-.35a7.962 7.962 0 00-1.02-2.46l1.29-1.72a.75.75 0 00-.09-.97l-1.41-1.41a.75.75 0 00-.97-.09l-1.72 1.29c-.77-.44-1.6-.78-2.46-1.02L13.06 2.06A.75.75 0 0012.31 2h-1.62a.75.75 0 00-.75.65l-.35 2.12a7.962 7.962 0 00-2.46 1.02L5 4.6a.75.75 0 00-.97.09L2.62 6.1a.75.75 0 00-.09.97l1.29 1.72c-.44.77-.78 1.6-1.02 2.46l-2.12.35a.75.75 0 00-.65.75v1.62c0 .37.27.69.63.75l2.14.36c.24.86.58 1.69 1.02 2.46L2.53 18a.75.75 0 00.09.97l1.41 1.41c.26.26.67.29.97.09l1.72-1.29c.77.44 1.6.78 2.46 1.02l.35 2.12c.06.36.38.63.75.63h1.62c.37 0 .69-.27.75-.63l.36-2.14c.86-.24 1.69-.58 2.46-1.02l1.72 1.29c.3.2.71.17.97-.09l1.41-1.41c.26-.26.29-.67.09-.97l-1.29-1.72c.44-.77.78-1.6 1.02-2.46l2.12-.35c.36-.06.63-.38.63-.75v-1.62a.75.75 0 00-.65-.75z"/></svg>';
       };
 
-      img.src = "LuaTools/manifestadvtools-icon.png";
+      img.src = "LuaTools/advgametool-icon.png";
 
       Millennium.callServerMethod("ManifestAdvTools", "GetIconDataUrl", {})
         .then(function (res) {
@@ -7311,7 +7258,7 @@ function addLuaToolsButton() {
             "btnv6_blue_hoverfade btn_medium luatools-button";
         }
         const span = document.createElement("span");
-        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
+        const addViaText = lt("⚡ Adicionar (AdvgameTool)");
         span.textContent = addViaText;
         luatoolsButton.appendChild(span);
         // Tooltip/title
@@ -7349,7 +7296,7 @@ function addLuaToolsButton() {
         ].join("");
         const bundleSpan = document.createElement("span");
         bundleSpan.textContent = "🎮 Jogo + OnlineFix";
-        bundleBtn.title = "ManifestAdvTools - Baixar Manifesto + OnlineFix";
+        bundleBtn.title = "AdvgameTool - Baixar Manifesto + OnlineFix";
         bundleBtn.setAttribute("data-tooltip-text", "Download Manifest + OnlineFix Bundle");
         bundleBtn.appendChild(bundleSpan);
         try {
@@ -7438,7 +7385,7 @@ function addLuaToolsButton() {
                     steamdbContainer.appendChild(luatoolsButton);
                   }
                   // Insert bundle button right after manifest button
-                  /* bundleBtn removed */
+                  try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
                   window.__LuaToolsButtonInserted = true;
                   backendLog("LuaTools button inserted");
                 }
@@ -7449,7 +7396,7 @@ function addLuaToolsButton() {
                   !window.__LuaToolsButtonInserted
                 ) {
                   steamdbContainer.appendChild(luatoolsButton);
-                  /* bundleBtn removed */
+                  try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
                   window.__LuaToolsButtonInserted = true;
                   backendLog("LuaTools button inserted");
                 }
@@ -7472,7 +7419,7 @@ function addLuaToolsButton() {
               } else {
                 steamdbContainer.appendChild(luatoolsButton);
               }
-              /* bundleBtn removed */
+              try { luatoolsButton.after(bundleBtn); } catch(_) { steamdbContainer.appendChild(bundleBtn); }
               window.__LuaToolsButtonInserted = true;
               backendLog("LuaTools button inserted");
             }
@@ -7751,7 +7698,7 @@ function addLuaToolsButton() {
                 askRestartConfirmation();
               } else {
                 // For non-update messages, use regular alert
-                ShowLuaToolsAlert("ManifestAdvTools", msg);
+                ShowLuaToolsAlert("AdvgameTool", msg);
               }
             }
           } catch (_) {}
@@ -7951,7 +7898,8 @@ function addLuaToolsButton() {
                   showTestPopup();
                 }
 
-                Millennium.callServerMethod("ManifestAdvTools",
+                Millennium.callServerMethod(
+                  "ManifestAdvTools",
                   "StartAddViaLuaToolsFromUrl",
                   {
                     appid,
@@ -8572,7 +8520,8 @@ function addLuaToolsButton() {
                         link.addEventListener("click", function (e) {
                           e.preventDefault();
                           try {
-                            Millennium.callServerMethod("ManifestAdvTools",
+                            Millennium.callServerMethod(
+                              "ManifestAdvTools",
                               "OpenExternalUrl",
                               {
                                 url:
@@ -8826,7 +8775,7 @@ function addLuaToolsButton() {
     const title = document.createElement("div");
     const loadedAppsTitleColors = getThemeColors();
     title.style.cssText = `font-size:22px;color:${loadedAppsTitleColors.text};margin-bottom:20px;font-weight:700;background:${loadedAppsTitleColors.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;`;
-    title.textContent = t("common.addedGames", "ManifestAdvTools · Jogos Adicionados");
+    title.textContent = t("common.addedGames", "AdvgameTool · Jogos Adicionados");
     const body = document.createElement("div");
     const loadedAppsBodyColors = getThemeColors();
     body.style.cssText = `font-size:14px;line-height:1.8;margin-bottom:16px;max-height:320px;overflow:auto;padding:16px;border:1px solid ${loadedAppsBodyColors.border};border-radius:12px;background:${loadedAppsBodyColors.bgContainer};`;

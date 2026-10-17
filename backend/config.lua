@@ -26,7 +26,7 @@ local config = {
 
     UPDATE_CHECK_INTERVAL_SECONDS = 2 * 60 * 60, -- 2 hours
 
-    USER_AGENT = "github.com/Adv3ntur3sBr/ManifestAdvTools",
+    USER_AGENT = "github.com/l89699756-design/ManifestAdvTools",
 
     LOADED_APPS_FILE = "loadedappids.txt",
     APPID_LOG_FILE = "appidlogs.txt",

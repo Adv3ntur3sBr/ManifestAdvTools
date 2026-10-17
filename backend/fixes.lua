@@ -1,12 +1,32 @@
-local m_utils = require("utils")
-local fs = require("fs")
+local m_utils     = require("utils")
+local fs          = require("fs")
 local http_client = require("http_client")
-local logger = require("plugin_logger")
-local utils = require("plugin_utils")
-local paths = require("paths")
-local cjson = require("json")
+local logger      = require("plugin_logger")
+local utils       = require("plugin_utils")
+local paths       = require("paths")
+local cjson       = require("json")
+local bg_job      = require("bg_job")
 
 local fixes = {}
+
+local INSTALLED_FIXES_FILE = paths.backend_path("data/installed_fixes.json")
+local IN_FLIGHT_FIXES = {}
+local UNFIX_STATES = {}
+
+local function _load_installed_fixes()
+    if not fs.exists(INSTALLED_FIXES_FILE) then return {} end
+    local data = utils.read_json(INSTALLED_FIXES_FILE)
+    if type(data) == "table" and type(data.fixes) == "table" then
+        return data.fixes
+    end
+    return {}
+end
+
+local function _save_installed_fixes(list)
+    local dir = fs.parent_path(INSTALLED_FIXES_FILE)
+    if not fs.exists(dir) then fs.create_directories(dir) end
+    utils.write_json(INSTALLED_FIXES_FILE, { fixes = list })
+end
 
 function fixes.check_for_fixes(appid)
     if type(appid) == "string" then appid = tonumber(appid) end
@@ -17,17 +37,19 @@ function fixes.check_for_fixes(appid)
         genericFix = { status = 0, available = false },
         onlineFix = { status = 0, available = false }
     }
-    
+
     local FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
     local resp = http_client.get(FIXES_INDEX_URL, { timeout = 10 })
     if resp and resp.status == 200 and resp.body then
         local data = utils.decode_json(resp.body)
         if type(data) == "table" then
             local generic_url = "https://files.luatools.work/GameBypasses/" .. tostring(appid) .. ".zip"
-            local online_url = "https://files.luatools.work/OnlineFix1/" .. tostring(appid) .. ".zip"
-            
+            local online_url  = "https://files.luatools.work/OnlineFix1/" .. tostring(appid) .. ".zip"
+
             local has_generic = false
-            for _, v in ipairs(data.genericFixes or {}) do if tonumber(v) == appid then has_generic = true break end end
+            for _, v in ipairs(data.genericFixes or {}) do
+                if tonumber(v) == appid then has_generic = true; break end
+            end
             if has_generic then
                 result.genericFix.status = 200
                 result.genericFix.available = true
@@ -35,9 +57,11 @@ function fixes.check_for_fixes(appid)
             else
                 result.genericFix.status = 404
             end
-            
+
             local has_online = false
-            for _, v in ipairs(data.onlineFixes or {}) do if tonumber(v) == appid then has_online = true break end end
+            for _, v in ipairs(data.onlineFixes or {}) do
+                if tonumber(v) == appid then has_online = true; break end
+            end
             if has_online then
                 result.onlineFix.status = 200
                 result.onlineFix.available = true
@@ -47,87 +71,165 @@ function fixes.check_for_fixes(appid)
             end
         end
     end
-    
+
     return result
 end
 
 function fixes.apply_game_fix(appid, download_url, install_path, fix_type, game_name)
-    local dest_root = utils.ensure_temp_download_dir()
-    local dest_zip = fs.join(dest_root, "fix_" .. tostring(appid) .. ".zip")
-    local state_file = fs.join(dest_root, "fix_" .. tostring(appid) .. "_state.json")
-    local ps1_path = fs.join(dest_root, "fix_" .. tostring(appid) .. "_dl.ps1")
+    appid = tonumber(appid)
+    if not appid then return { success = false, error = "Invalid appid" } end
+    if not download_url or download_url == "" then
+        return { success = false, error = "Missing downloadUrl" }
+    end
+    if not install_path or install_path == "" then
+        return { success = false, error = "Missing installPath" }
+    end
 
-    logger.log("ManifestAdvTools: Applying fix to " .. tostring(install_path))
-    m_utils.write_file(state_file, '{"status": "downloading"}')
+    logger.log("fixes: Applying " .. tostring(fix_type) .. " for " .. tostring(appid) .. " to " .. tostring(install_path))
 
-    local is_windows = m_utils.getenv("OS") == "Windows_NT"
+    local job_id = "fix_" .. tostring(appid)
+    IN_FLIGHT_FIXES[appid] = {
+        appid = appid,
+        gameName = (game_name and game_name ~= "") and game_name or ("Game (" .. appid .. ")"),
+        fixType = (fix_type and fix_type ~= "") and fix_type or "Generic Fix",
+        installPath = install_path,
+        url = download_url,
+        date = os.date("%Y-%m-%d"),
+    }
 
-    local function fwd(p) return (p:gsub("\\\\", "/"):gsub("\\", "/")) end
+    local ok, err = pcall(bg_job.launch, {
+        id = job_id,
+        url = download_url,
+        extract_dir = install_path,
+        record_files = true,
+        user_agent = "ManifestAdvTools"
+    })
 
-    if is_windows then
-        local sf = fwd(state_file)
-        local dz = fwd(dest_zip)
-        local ip = fwd(install_path)
-        local ps1 =
-            "$sf  = '" .. sf  .. "'\r\n" ..
-            "$url = '" .. download_url .. "'\r\n" ..
-            "$dp  = '" .. dz  .. "'\r\n" ..
-            "$ed  = '" .. ip  .. "'\r\n" ..
-            "$ErrorActionPreference = 'Stop'\r\n" ..
-            "try {\r\n" ..
-            "    [IO.File]::WriteAllText($sf, '{\"status\":\"downloading\"}')\r\n" ..
-            "    $wc = New-Object Net.WebClient\r\n" ..
-            "    $wc.Headers['User-Agent'] = 'ManifestAdvTools/8.1.1'\r\n" ..
-            "    $wc.DownloadFile($url, $dp)\r\n" ..
-            "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracting\"}')\r\n" ..
-            "    Add-Type -A System.IO.Compression.FileSystem\r\n" ..
-            "    [IO.Compression.ZipFile]::ExtractToDirectory($dp, $ed)\r\n" ..
-            "    [IO.File]::WriteAllText($sf, '{\"status\":\"extracted\"}')\r\n" ..
-            "} catch {\r\n" ..
-            "    [IO.File]::WriteAllText($sf, '{\"status\":\"failed\",\"error\":\"download failed\"}')\r\n" ..
-            "}\r\n"
-        m_utils.write_file(ps1_path, ps1)
-        local vbs_path = fs.join(paths.get_plugin_dir(), "backend", "silent_run.vbs")
-        local cmd = 'wscript.exe //b //nologo "' .. vbs_path .. '" "' .. ps1_path .. '"'
-        m_utils.exec(cmd)
-    else
-        local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
-        m_utils.exec('chmod +x "' .. sh_path .. '"')
-        local cmd = string.format(
-            'nohup bash "%s" "%s" "%s" "%s" "%s" > /dev/null 2>&1 &',
-            sh_path, download_url, dest_zip, install_path, state_file
-        )
-        m_utils.exec(cmd)
+    if not ok then
+        logger.warn("fixes: Failed to launch bg_job: " .. tostring(err))
+        return { success = false, error = tostring(err) }
     end
 
     return { success = true }
 end
 
 function fixes.get_apply_status(appid)
-    local dest_root = utils.ensure_temp_download_dir()
-    local state_file = fs.join(dest_root, "fix_" .. tostring(appid) .. "_state.json")
-    local dest_zip = fs.join(dest_root, "fix_" .. tostring(appid) .. ".zip")
-    
-    if not fs.exists(state_file) then
+    appid = tonumber(appid)
+    if not appid then return { success = true, state = { status = "done" } } end
+
+    local job_id = "fix_" .. tostring(appid)
+    local state = bg_job.read_state(job_id)
+    if not state.status then
         return { success = true, state = { status = "done" } }
     end
-    
-    local content = m_utils.read_file(state_file)
-    if content and content ~= "" then
-        local success, data = pcall(cjson.decode, content)
-        if success and type(data) == "table" and data.status then
-            if data.status == "extracted" then
-                data.status = "done"
-                pcall(fs.remove, state_file)
-                pcall(fs.remove, dest_zip)
-            elseif data.status == "failed" then
-                pcall(fs.remove, state_file)
+
+    if state.status == "extracted" then
+        -- Finalize fix registration
+        local recorded_files = bg_job.read_file_list(job_id)
+        local meta = IN_FLIGHT_FIXES[appid] or {}
+        local list = _load_installed_fixes()
+
+        -- Remove existing record for this appid if replacing
+        local new_list = {}
+        for _, f in ipairs(list) do
+            if f.appid ~= appid then
+                table.insert(new_list, f)
             end
-            return { success = true, state = data }
+        end
+
+        table.insert(new_list, {
+            appid       = appid,
+            gameName    = meta.gameName or ("Game (" .. appid .. ")"),
+            fixType     = meta.fixType or "Generic Fix",
+            date        = meta.date or os.date("%Y-%m-%d"),
+            installPath = meta.installPath or "",
+            filesCount  = #recorded_files,
+            files       = recorded_files
+        })
+        _save_installed_fixes(new_list)
+
+        bg_job.cleanup(job_id, false)
+        IN_FLIGHT_FIXES[appid] = nil
+
+        return { success = true, state = { status = "done" } }
+    elseif state.status == "failed" then
+        local err = state.error or "fix download/extract failed"
+        bg_job.cleanup(job_id, false)
+        IN_FLIGHT_FIXES[appid] = nil
+        return { success = true, state = { status = "failed", error = err } }
+    elseif state.status == "cancelled" then
+        bg_job.cleanup(job_id, false)
+        IN_FLIGHT_FIXES[appid] = nil
+        return { success = true, state = { status = "cancelled", error = state.error or "Cancelled by user" } }
+    end
+
+    return { success = true, state = state }
+end
+
+function fixes.cancel_apply_fix(appid)
+    appid = tonumber(appid)
+    if appid then
+        bg_job.cancel("fix_" .. tostring(appid), "Cancelled by user")
+        IN_FLIGHT_FIXES[appid] = nil
+    end
+    return { success = true }
+end
+
+function fixes.get_installed_fixes()
+    local list = _load_installed_fixes()
+    return { success = true, fixes = list }
+end
+
+function fixes.unfix_game(appid, install_path, fix_date)
+    appid = tonumber(appid)
+    if not appid then return { success = false, error = "Invalid appid" } end
+
+    UNFIX_STATES[appid] = { status = "removing", progress = "Removing fix files..." }
+
+    local list = _load_installed_fixes()
+    local found = nil
+    local remaining = {}
+
+    for _, fix_item in ipairs(list) do
+        if fix_item.appid == appid then
+            found = fix_item
+        else
+            table.insert(remaining, fix_item)
         end
     end
-    
-    return { success = true, state = { status = "downloading" } }
+
+    local path = (install_path and install_path ~= "") and install_path or (found and found.installPath or "")
+    local removed_count = 0
+
+    if found and type(found.files) == "table" and path ~= "" and fs.exists(path) then
+        for _, rel_file in ipairs(found.files) do
+            local full_path = fs.join(path, rel_file)
+            if fs.exists(full_path) then
+                local ok = pcall(fs.remove, full_path)
+                if ok then removed_count = removed_count + 1 end
+            end
+        end
+    end
+
+    _save_installed_fixes(remaining)
+
+    UNFIX_STATES[appid] = {
+        status = "done",
+        success = true,
+        filesRemoved = removed_count
+    }
+
+    return { success = true, filesRemoved = removed_count }
+end
+
+function fixes.uninstall_fix(appid)
+    return fixes.unfix_game(appid)
+end
+
+function fixes.get_unfix_status(appid)
+    appid = tonumber(appid)
+    local state = UNFIX_STATES[appid] or { status = "done", success = true, filesRemoved = 0 }
+    return { success = true, state = state }
 end
 
 return fixes

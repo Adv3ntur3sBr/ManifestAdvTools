@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const currentVersion = "v8.1.0";
-  const repoOwner = "Adv3ntur3sBr";
+  const currentVersion = "v8.2.0";
+  const repoOwner = "l89699756-design";
   const repoName = "ManifestAdvTools";
 
   // Elements
@@ -42,35 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  
-  // Repair command elements
-  const copyRepairBtn = document.getElementById("copyRepairBtn");
-  const copyRepairIcon = document.getElementById("copyRepairIcon");
-  const copyRepairText = document.getElementById("copyRepairText");
-  const repairCmd = document.getElementById("repairCommand");
-
-  if (repairCmd && window.location.protocol.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1")) {
-    repairCmd.textContent = `irm "${window.location.origin}/repair.ps1" | iex`;
-  }
-
-  if (copyRepairBtn && repairCmd) {
-    copyRepairBtn.addEventListener("click", () => {
-      const textToCopy = repairCmd.textContent.trim();
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        copyRepairBtn.classList.add("copied");
-        copyRepairIcon.className = "fa-solid fa-check";
-        copyRepairText.textContent = "Copiado!";
-        setTimeout(() => {
-          copyRepairBtn.classList.remove("copied");
-          copyRepairIcon.className = "fa-regular fa-clone";
-          copyRepairText.textContent = "Copiar";
-        }, 2500);
-      }).catch(err => {
-        console.error("Falha ao copiar:", err);
-      });
-    });
-  }
-
   // Check updates via GitHub API
   async function checkUpdates() {
     if (updateSpinner) updateSpinner.classList.add("fa-spin");
@@ -94,11 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (latestVerDisplay) latestVerDisplay.textContent = currentVersion;
         if (statusBadge) {
           statusBadge.className = "status-badge up-to-date";
-          statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Versão mais recente (v8.1.0)';
+          statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Versão mais recente (v8.2.0)';
         }
         if (changelogCard) {
           changelogCard.style.display = "block";
-          changelogBody.textContent = "Repositório configurado. O ManifestAdvTools v8.1.0 é a versão mais recente.";
+          changelogBody.textContent = "Repositório configurado. O ManifestAdvTools v8.2.0 é a versão mais recente.";
           releaseDownloadLink.href = `https://github.com/${repoOwner}/${repoName}`;
           releaseDownloadLink.innerHTML = '<i class="fa-brands fa-github"></i> Ver Repositório no GitHub';
         }

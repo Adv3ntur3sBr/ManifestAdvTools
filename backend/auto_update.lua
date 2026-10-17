@@ -51,7 +51,7 @@ function auto_update.check_for_updates_now()
                 end
             end
             if zip_url == "" and tag_name ~= "" then
-                zip_url = "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/" .. tag_name .. "/" .. asset_name
+                zip_url = "https://github.com/l89699756-design/ManifestAdvTools/releases/download/" .. tag_name .. "/" .. asset_name
             end
         end
     end
@@ -102,21 +102,13 @@ end
 function auto_update.restart_steam()
     local is_windows = m_utils.getenv("OS") == "Windows_NT"
     if is_windows then
-        local steam_dir = steam_utils.detect_steam_install_path() or "C:\\Program Files (x86)\\Steam"
-        local steam_exe = fs.join(steam_dir, "steam.exe"):gsub("/", "\\")
-        
-        -- Detached PowerShell process that survives Steam job object termination
-        local ps_cmd = string.format(
-            'powershell.exe -NoProfile -WindowStyle Hidden -Command "' ..
-            'Start-Sleep -Seconds 1; ' ..
-            'Get-Process -Name \'steam\', \'steamwebhelper\', \'millennium*\' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; ' ..
-            'Start-Sleep -Seconds 2; ' ..
-            'if (Test-Path \'%s\') { Start-Process \'%s\' } else { Start-Process \'steam://open/main\' }"',
-            steam_exe, steam_exe
-        )
-        
-        m_utils.exec('cmd.exe /c start "" /min ' .. ps_cmd)
-        return true
+        local script_path = paths.backend_path("restart_steam.cmd")
+        if fs.exists(script_path) then
+            local win_path = script_path:gsub("/", "\\")
+            -- Launch in a detached console/process so it survives Steam termination
+            m_utils.exec('cmd.exe /c start "" "' .. win_path .. '"')
+            return true
+        end
     else
         m_utils.exec("killall steam && steam &")
         return true

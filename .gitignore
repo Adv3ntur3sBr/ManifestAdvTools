@@ -1,0 +1,7 @@
+# IDE & Agent data
+.agents/
+.gemini/
+
+# Temp download caches
+backend/temp_dl/
+*.tmp

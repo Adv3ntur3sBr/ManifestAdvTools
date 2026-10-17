@@ -1,50 +1,37 @@
 {
+  "version": 2,
   "cleanUrls": true,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "/install-plugin.ps1",
+      "dest": "/install-plugin.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
     },
     {
-      "source": "/install",
-      "destination": "/install-plugin.ps1"
+      "src": "/install.ps1",
+      "dest": "/install.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
     },
     {
-      "source": "/install.ps1",
-      "destination": "/install-plugin.ps1"
+      "src": "/install",
+      "dest": "/install.ps1",
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
     },
     {
-      "source": "/repair",
-      "destination": "/repair.ps1"
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ],
   "headers": [
-    {
-      "source": "/(.*).ps1",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "text/plain; charset=utf-8"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).zip",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/zip"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    },
     {
       "source": "/(.*)",
       "headers": [

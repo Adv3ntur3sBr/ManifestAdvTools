@@ -127,7 +127,7 @@
     "Your Morrenus API key is invalid or expired. Please check your key in the settings or regenerate it on the Morrenus website.": "ur morrenus key ting is no gud or it expireded!!! go 2 da settings n chekded it or get a nu won from da morrenus websiteded!!!",
     "bigpicture.mouseTip": "2 use mous moded in steam: guid buton + rite joystik, clikded wit RB",
     "common.alert.ok": "OK Buton (i git it now mayb)",
-    "common.appName": "ManifestAdvTools",
+    "common.appName": "AdvgameTool",
     "common.error.unsupportedOption": "dis option ting isnt werkinged cuz: {type} (idk wat dat meens tho lol)",
     "common.status.error": "UH OH SUMTING BROKEDEDED BAD",
     "common.status.loading": "Lodinged Da Ting Pls Wait 4 It...",
@@ -159,9 +159,9 @@
     "menu.remove.confirm": "u sur u wana delet LooaToolz 4 dis gaem??? rlly rlly sur??? pinky promis???",
     "menu.remove.failure": "oopsies daisies couldnt deletdeded it sory my bad i tride tho",
     "menu.remove.success": "ok i deletdeded LooaToolz 4 dis gaem it goned now gud bye 4ever",
-    "menu.removeLuaTools": "Remove via ManifestAdvTools",
+    "menu.removeLuaTools": "Remove via AdvgameTool",
     "menu.settings": "Setinz Ting",
-    "menu.title": "ManifestAdvTools",
+    "menu.title": "AdvgameTool",
     "settings.close": "Clos Buton (maek it goed away 4ever pls)",
     "settings.donateKeys.description": "giv ur decript keyz 2 halp othr ppl i gess dats nise rite??? mayb dey giv u cookee???",
     "settings.donateKeys.label": "Giv Awy Keyz 2 Ppl 4 Fre",
@@ -216,7 +216,7 @@
     "settings.theme.label": "Themed",
     "settings.title": "LooaToolz · Setinz (how spel??? halp)",
     "settings.unsaved": "u didnt clickeded savde yet dum dum hed",
-    "settings.useSteamLanguage.description": "Use Steam client's language instead of ManifestAdvTools setting ngl fr.",
+    "settings.useSteamLanguage.description": "Use Steam client's language instead of AdvgameTool setting ngl fr.",
     "settings.useSteamLanguage.label": "Use Steam Language ong",
     "settings.useSteamLanguage.no": "CAP",
     "settings.useSteamLanguage.yes": "YESSIR",
@@ -224,8 +224,7 @@
     "settings.morrenusApiKey.label": "Mornus Key",
     "settings.morrenusApiKey.description": "Key make Sadie go brrr. Get key at {link}",
     "settings.morrenusApiKey.placeholder": "Smash key here",
-    "menu.reloadUi": "Recarregar Visual (RL)",
     "menu.restartSteam": "Restart Steam",
-    "menu.addViaLuaTools": "Add (ManifestAdvTools)"
+    "menu.addViaLuaTools": "Add (AdvgameTool)"
   }
 }

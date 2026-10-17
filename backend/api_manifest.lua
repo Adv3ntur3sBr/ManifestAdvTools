@@ -12,13 +12,6 @@ local _INIT_APIS_LAST_MESSAGE = ""
 
 local DEFAULT_FREE_APIS = {
     {
-        name = "Ryuu",
-        url = "http://167.235.229.108/<appid>",
-        success_code = 200,
-        unavailable_code = 404,
-        enabled = true
-    },
-    {
         name = "Raian Manifests",
         url = "https://raw.githubusercontent.com/raianffyt2222/reporaianlmm/refs/heads/main/<appid>.zip",
         success_code = 200,
@@ -103,22 +96,22 @@ function api_manifest.store_last_message(message)
 end
 
 function api_manifest.fetch_free_apis_now()
-    logger.log("ManifestAdvTools: FetchFreeApisNow invoked")
+    logger.log("AdvgameTool: FetchFreeApisNow invoked")
     local manifest_text = ""
 
-    logger.log("ManifestAdvTools: Fetching manifest from " .. config.API_MANIFEST_URL)
+    logger.log("AdvgameTool: Fetching manifest from " .. config.API_MANIFEST_URL)
     local resp = http_client.get(config.API_MANIFEST_URL, { timeout = 15 })
     if resp and resp.status == 200 and resp.body then
         manifest_text = resp.body
-        logger.log("ManifestAdvTools: Fetched manifest from primary URL")
+        logger.log("AdvgameTool: Fetched manifest from primary URL")
     else
-        logger.warn("ManifestAdvTools: Primary manifest URL failed, trying proxy...")
+        logger.warn("AdvgameTool: Primary manifest URL failed, trying proxy...")
         resp = http_client.get(config.API_MANIFEST_PROXY_URL, { timeout = config.HTTP_PROXY_TIMEOUT_SECONDS })
         if resp and resp.status == 200 and resp.body then
             manifest_text = resp.body
-            logger.log("ManifestAdvTools: Fetched manifest from proxy URL")
+            logger.log("AdvgameTool: Fetched manifest from proxy URL")
         else
-            logger.warn("ManifestAdvTools: Proxy manifest URL also failed")
+            logger.warn("AdvgameTool: Proxy manifest URL also failed")
         end
     end
 
@@ -173,7 +166,7 @@ function api_manifest.load_api_manifest()
     local normalized = utils.normalize_manifest_text(text)
     if normalized and normalized ~= text and normalized ~= "" then
         utils.write_text(path, normalized)
-        logger.log("ManifestAdvTools: Normalized api.json")
+        logger.log("AdvgameTool: Normalized api.json")
         text = normalized
     end
 
@@ -226,7 +219,7 @@ function api_manifest.add_custom_api(payload)
     local formatted = utils.normalize_manifest_text(new_text)
     utils.write_text(path, formatted)
     
-    logger.log("ManifestAdvTools: Added custom API: " .. payload.name)
+    logger.log("AdvgameTool: Added custom API: " .. payload.name)
     return { success = true }
 end
 
@@ -299,7 +292,7 @@ function api_manifest.toggle_api(name)
     local formatted = utils.normalize_manifest_text(new_text)
     utils.write_text(path, formatted)
 
-    logger.log("ManifestAdvTools: Toggled API '" .. name .. "' -> " .. tostring(new_state))
+    logger.log("AdvgameTool: Toggled API '" .. name .. "' -> " .. tostring(new_state))
     return { success = true, enabled = new_state }
 end
 
@@ -333,7 +326,7 @@ function api_manifest.remove_api(name)
     local formatted = utils.normalize_manifest_text(new_text)
     utils.write_text(path, formatted)
 
-    logger.log("ManifestAdvTools: Removed API '" .. name .. "'")
+    logger.log("AdvgameTool: Removed API '" .. name .. "'")
     return { success = true }
 end
 
@@ -365,7 +358,7 @@ function api_manifest.rename_api(old_name, new_name)
     local formatted = utils.normalize_manifest_text(new_text)
     utils.write_text(path, formatted)
 
-    logger.log("ManifestAdvTools: Renamed API '" .. old_name .. "' -> '" .. new_name .. "'")
+    logger.log("AdvgameTool: Renamed API '" .. old_name .. "' -> '" .. new_name .. "'")
     return { success = true }
 end
 
@@ -406,7 +399,7 @@ function api_manifest.set_api_order(ordered_names)
     local formatted = utils.normalize_manifest_text(new_text)
     utils.write_text(path, formatted)
 
-    logger.log("ManifestAdvTools: Reordered APIs")
+    logger.log("AdvgameTool: Reordered APIs")
     return { success = true }
 end
 
