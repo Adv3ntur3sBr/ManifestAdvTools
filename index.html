@@ -31,9 +31,10 @@
       </div>
       <div class="nav-links">
         <a href="#install" class="nav-link"><i class="fa-solid fa-download"></i> Instalação</a>
+        <a href="#uninstall" class="nav-link"><i class="fa-solid fa-trash-can"></i> Desinstalar</a>
         <a href="#updates" class="nav-link"><i class="fa-solid fa-arrows-rotate"></i> Atualizações</a>
         <a href="#features" class="nav-link"><i class="fa-solid fa-layer-group"></i> Recursos</a>
-        <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank" class="nav-btn-git">
+        <a href="https://github.com/Adv3ntur3sBr/ManifestAdvTools" target="_blank" class="nav-btn-git">
           <i class="fa-brands fa-github"></i> GitHub
         </a>
       </div>
@@ -75,6 +76,30 @@
         <div class="terminal-footer">
           <span><i class="fa-solid fa-circle-check"></i> Instala o Millennium automaticamente se não estiver presente</span>
           <span><i class="fa-solid fa-shield-halved"></i> 100% Código Aberto e Seguro</span>
+        </div>
+      </div>
+
+      <!-- Terminal Quick Uninstall / Restore -->
+      <div class="install-card" id="uninstall" style="margin-top: 24px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 8px 32px rgba(239, 68, 68, 0.1);">
+        <div class="terminal-header" style="background: rgba(239, 68, 68, 0.08); border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+          <div class="terminal-dots">
+            <span class="dot" style="background:#ef4444; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>
+            <span class="dot" style="background:#eab308; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>
+            <span class="dot" style="background:#22c55e; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>
+          </div>
+          <span class="terminal-title" style="color: #f87171;"><i class="fa-solid fa-trash-can"></i> Desinstalar Tudo — Restaurar Steam 100% Original</span>
+          <span class="terminal-tag" style="background: rgba(239, 68, 68, 0.2); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.4);">Restauração 1-Click</span>
+        </div>
+        <div class="terminal-body">
+          <code id="uninstallCommand">powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/uninstall.ps1 | iex"</code>
+          <button id="copyUninstallBtn" class="copy-btn" title="Copiar comando de desinstalação">
+            <i class="fa-regular fa-clone" id="copyUninstallIcon"></i>
+            <span id="copyUninstallText">Copiar</span>
+          </button>
+        </div>
+        <div class="terminal-footer">
+          <span><i class="fa-solid fa-shield-halved"></i> Remove Millennium, Steamtools, ManifestAdvTools e scripts Lua</span>
+          <span><i class="fa-solid fa-check-double"></i> Seus jogos e conta permanecem 100% intactos e originais</span>
         </div>
       </div>
 

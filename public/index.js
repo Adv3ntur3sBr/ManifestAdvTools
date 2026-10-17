@@ -42,6 +42,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Copy uninstall command to clipboard
+  const copyUninstallBtn = document.getElementById("copyUninstallBtn");
+  const copyUninstallIcon = document.getElementById("copyUninstallIcon");
+  const copyUninstallText = document.getElementById("copyUninstallText");
+  const uninstallCmd = document.getElementById("uninstallCommand");
+
+  if (copyUninstallBtn && uninstallCmd) {
+    copyUninstallBtn.addEventListener("click", () => {
+      const textToCopy = uninstallCmd.textContent.trim();
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyUninstallBtn.classList.add("copied");
+        copyUninstallIcon.className = "fa-solid fa-check";
+        copyUninstallText.textContent = "Copiado!";
+        setTimeout(() => {
+          copyUninstallBtn.classList.remove("copied");
+          copyUninstallIcon.className = "fa-regular fa-clone";
+          copyUninstallText.textContent = "Copiar";
+        }, 2500);
+      }).catch(err => {
+        console.error("Falha ao copiar:", err);
+      });
+    });
+  }
+
   // Check updates via GitHub API
   async function checkUpdates() {
     if (updateSpinner) updateSpinner.classList.add("fa-spin");

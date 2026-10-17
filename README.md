@@ -9,7 +9,7 @@
 Abra o **PowerShell** no Windows e execute o comando abaixo:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/install.ps1 | iex"
 ```
 
 > 💡 **O que o instalador faz:**
@@ -17,6 +17,18 @@ powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/l89
 > 2. Verifica se o Millennium está presente. Caso não esteja, realiza o download e a instalação de forma silenciosa.
 > 3. Baixa e instala a versão mais recente do **ManifestAdvTools**.
 > 4. Reinicia a Steam com o plugin 100% pronto para uso.
+
+---
+
+## 🗑️ Desinstalação Completa (1-Click)
+
+Para remover **100% de qualquer modificação** (Millennium, Steamtools, ManifestAdvTools e scripts Lua) e restaurar sua Steam para o estado original de fábrica:
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/uninstall.ps1 | iex"
+```
+
+> 🛡️ **Garantia de Segurança:** Seus jogos já instalados, bibliotecas e conta da Steam permanecem 100% intactos. Apenas os arquivos injetados (`dwmapi.dll`, `xinput1_4.dll`, `wsock32.dll`, pasta `millennium/` e scripts `stplug-in`) são removidos.
 
 ---
 
