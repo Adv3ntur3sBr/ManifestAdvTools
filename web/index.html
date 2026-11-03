@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="index.css?v=9.1.0">
+  <link rel="stylesheet" href="index.css?v=9.2.1">
 </head>
 <body data-version="8.5.0" data-repo="Adv3ntur3sBr/ManifestAdvTools">
   <a href="#main" class="skip-link">Pular para o conteúdo</a>
@@ -38,6 +38,10 @@
         <a href="#capabilities" class="nav-link">Recursos</a>
         <a href="#updates" class="nav-link">Atualizações</a>
         <a href="#uninstall" class="nav-link">Desinstalar</a>
+        <label class="lang-pick" title="Idioma">
+          <i class="fa-solid fa-globe" aria-hidden="true"></i>
+          <select id="langSelect" aria-label="Idioma"></select>
+        </label>
         <a href="https://github.com/Adv3ntur3sBr/ManifestAdvTools" target="_blank" rel="noopener noreferrer" class="nav-git">
           <i class="fa-brands fa-github"></i> GitHub
         </a>
@@ -318,6 +322,7 @@
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="index.js?v=9.1.0" defer></script>
+  <script src="i18n.js?v=9.2.1" defer></script>
+  <script src="index.js?v=9.2.1" defer></script>
 </body>
 </html>

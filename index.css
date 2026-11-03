@@ -99,6 +99,23 @@ h1, h2, h3, .stat-num, .brand-name { font-family: var(--font-display); letter-sp
   border: 1px solid var(--line); padding: 7px 14px; border-radius: 9px; transition: border-color .18s, color .18s;
 }
 .nav-git:hover { border-color: var(--steel); color: var(--steel); }
+.lang-pick {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  color: var(--mute); font-size: 13px; cursor: pointer;
+}
+.lang-pick i { pointer-events: none; }
+.lang-pick select {
+  appearance: none; -webkit-appearance: none;
+  background: transparent; color: var(--ink); font: 500 13px/1 var(--font-body);
+  border: 1px solid var(--line); border-radius: 9px; padding: 7px 26px 7px 10px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mute) 50%), linear-gradient(135deg, var(--mute) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 50%, calc(100% - 9px) 50%;
+  background-size: 4px 4px; background-repeat: no-repeat;
+  transition: border-color .18s;
+}
+.lang-pick select:hover { border-color: var(--steel); }
+.lang-pick select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.lang-pick option { background: var(--panel); color: var(--ink); }
 .nav-toggle {
   display: none; width: 40px; height: 40px; border-radius: 9px;
   border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 17px; cursor: pointer;
@@ -107,7 +124,7 @@ h1, h2, h3, .stat-num, .brand-name { font-family: var(--font-display); letter-sp
 /* ── Hero ────────────────────────────────────────── */
 .hero { padding: 70px 0 48px; }
 .hero-grid {
-  display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 54px; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: 54px; align-items: center;
 }
 
 .kicker {
@@ -314,7 +331,7 @@ h1, h2, h3, .stat-num, .brand-name { font-family: var(--font-display); letter-sp
 
 /* ── Responsive ──────────────────────────────────── */
 @media (max-width: 940px) {
-  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .console { order: -1; }
   .pipe { grid-template-columns: repeat(2, 1fr); gap: 28px 20px; }
   .pipe-step::after { display: none; }
@@ -328,6 +345,8 @@ h1, h2, h3, .stat-num, .brand-name { font-family: var(--font-display); letter-sp
   .nav-links.open { display: flex; }
   .nav-link { padding: 12px 8px; }
   .nav-git { justify-content: center; margin-top: 8px; }
+  .lang-pick { padding: 10px 8px; }
+  .lang-pick select { flex: 1; }
 }
 @media (max-width: 680px) {
   .shell { padding: 0 16px; }

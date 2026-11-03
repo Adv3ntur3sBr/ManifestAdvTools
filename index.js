@@ -7,6 +7,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const CACHE_TTL = 10 * 60 * 1000; // 10 min — avoids GitHub's 60 req/h anonymous limit
 
   const $ = id => document.getElementById(id);
+  const i18n = window.MAT_I18N;
+  const T = (key, vars) => (i18n ? i18n.t(key, vars) : key);
+
+  // Language picker
+  const langSelect = $("langSelect");
+  if (i18n) {
+    if (langSelect) {
+      i18n.languages.forEach(({ code, label }) => langSelect.add(new Option(label, code)));
+      langSelect.value = i18n.lang;
+      langSelect.addEventListener("change", () => i18n.setLang(langSelect.value));
+    }
+    i18n.translateDom();
+  }
 
   document.querySelectorAll("[data-version-label]").forEach(el => (el.textContent = currentVersion));
   const yearEl = $("year");
@@ -81,17 +94,17 @@ document.addEventListener("DOMContentLoaded", () => {
       copy.then(() => {
         btn.classList.add("copied");
         if (icon) icon.className = "fa-solid fa-check";
-        if (label) label.textContent = "Copiado!";
+        if (label) label.textContent = T("Copiado!");
         const isLinux = btn.dataset.copy && btn.dataset.copy.toLowerCase().includes("linux");
-        showToast(isLinux ? "Comando copiado! Cole no terminal Linux e pressione Enter." : "Comando copiado! Cole no PowerShell e pressione Enter.");
+        showToast(T(isLinux ? "Comando copiado! Cole no terminal Linux e pressione Enter." : "Comando copiado! Cole no PowerShell e pressione Enter."));
         setTimeout(() => {
           btn.classList.remove("copied");
           if (icon) icon.className = "fa-regular fa-clone";
-          if (label) label.textContent = "Copiar";
+          if (label) label.textContent = T("Copiar");
         }, 2500);
       }).catch(err => {
         console.error("Falha ao copiar:", err);
-        showToast("Não foi possível copiar. Selecione o comando manualmente.");
+        showToast(T("Não foi possível copiar. Selecione o comando manualmente."));
       });
     });
   });
@@ -156,32 +169,46 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
+  let lastRelease = null;
+  let lastError = null;
+
+  function renderError(err) {
+    lastError = err;
+    if (latestVerDisplay) latestVerDisplay.textContent = T("Indisponível");
+    setStatus("error", "fa-solid fa-triangle-exclamation",
+      err.message === "rate-limit"
+        ? T("Limite da API do GitHub atingido. Tente novamente em alguns minutos.")
+        : T("Falha ao consultar o GitHub"));
+  }
+
   function renderRelease(rel) {
+    lastRelease = rel;
+    lastError = null;
     changelogCard.hidden = false;
 
     if (rel.none) {
       latestVerDisplay.textContent = currentVersion;
-      setStatus("up-to-date", "fa-solid fa-circle-check", `Versão mais recente (${currentVersion})`);
+      setStatus("up-to-date", "fa-solid fa-circle-check", T("Versão mais recente ({v})", { v: currentVersion }));
       changelogDate.textContent = "";
-      changelogBody.textContent = `Nenhuma release publicada ainda. O ManifestAdvTools ${currentVersion} é a versão atual.`;
+      changelogBody.textContent = T("Nenhuma release publicada ainda. O ManifestAdvTools {v} é a versão atual.", { v: currentVersion });
       releaseDownloadLink.href = repoUrl;
-      releaseDownloadLink.innerHTML = '<i class="fa-brands fa-github"></i> Ver Repositório no GitHub';
+      releaseDownloadLink.innerHTML = '<i class="fa-brands fa-github"></i> ' + escapeHtml(T("Ver Repositório no GitHub"));
       return;
     }
 
     latestVerDisplay.textContent = rel.tag;
     if (compareVersions(rel.tag, currentVersion) > 0) {
-      setStatus("update-avail", "fa-solid fa-arrow-up", `Atualização disponível (${rel.tag})`);
+      setStatus("update-avail", "fa-solid fa-arrow-up", T("Atualização disponível ({v})", { v: rel.tag }));
     } else {
-      setStatus("up-to-date", "fa-solid fa-circle-check", "Você está na versão mais recente");
+      setStatus("up-to-date", "fa-solid fa-circle-check", T("Você está na versão mais recente"));
     }
 
     changelogDate.textContent = rel.date
-      ? new Date(rel.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+      ? new Date(rel.date).toLocaleDateString(i18n ? i18n.dateLocale : "pt-BR", { day: "2-digit", month: "short", year: "numeric" })
       : "";
-    changelogBody.textContent = cleanMarkdown(rel.body) || "Nenhuma nota de atualização fornecida para este release.";
+    changelogBody.textContent = cleanMarkdown(rel.body) || T("Nenhuma nota de atualização fornecida para este release.");
     releaseDownloadLink.href = rel.zipUrl || rel.htmlUrl || repoUrl;
-    releaseDownloadLink.innerHTML = `<i class="fa-solid fa-download"></i> Baixar ${escapeHtml(rel.tag)}${rel.zipUrl ? " (.ZIP)" : ""}`;
+    releaseDownloadLink.innerHTML = `<i class="fa-solid fa-download"></i> ${escapeHtml(T("Baixar {v}", { v: rel.tag }))}${rel.zipUrl ? " (.ZIP)" : ""}`;
     if (rel.zipUrl && manualDownloadBtn) manualDownloadBtn.href = rel.zipUrl;
   }
 
@@ -191,18 +218,14 @@ document.addEventListener("DOMContentLoaded", () => {
     checking = true;
     if (checkUpdateBtn) checkUpdateBtn.disabled = true;
     if (updateSpinner) updateSpinner.classList.add("fa-spin");
-    if (latestVerDisplay) latestVerDisplay.textContent = "Buscando...";
-    setStatus("", "fa-solid fa-spinner fa-spin", "Verificando no GitHub...");
+    if (latestVerDisplay) latestVerDisplay.textContent = T("Buscando...");
+    setStatus("", "fa-solid fa-spinner fa-spin", T("Verificando no GitHub..."));
 
     try {
       renderRelease(await fetchLatestRelease(force));
     } catch (err) {
       console.error("Erro ao verificar atualizações:", err);
-      if (latestVerDisplay) latestVerDisplay.textContent = "Indisponível";
-      setStatus("error", "fa-solid fa-triangle-exclamation",
-        err.message === "rate-limit"
-          ? "Limite da API do GitHub atingido. Tente novamente em alguns minutos."
-          : "Falha ao consultar o GitHub");
+      renderError(err);
     } finally {
       if (updateSpinner) updateSpinner.classList.remove("fa-spin");
       if (checkUpdateBtn) checkUpdateBtn.disabled = false;
@@ -241,6 +264,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (checkUpdateBtn) checkUpdateBtn.addEventListener("click", () => checkUpdates(true));
+
+  // Messages built with a version number can't be mapped back to a key, so redraw them
+  document.addEventListener("mat:langchange", () => {
+    if (langSelect && i18n) langSelect.value = i18n.lang;
+    if (checking) return;
+    if (lastRelease) renderRelease(lastRelease);
+    else if (lastError) renderError(lastError);
+  });
 
   // Reveal-on-scroll
   const revealEls = document.querySelectorAll(".reveal");
