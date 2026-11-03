@@ -2379,7 +2379,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.7\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.8\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -2768,9 +2768,12 @@
     const colors = getThemeColors();
     modal.style.cssText = `background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:520px;max-width:calc(100vw - 32px);max-height:85vh;display:flex;flex-direction:column;padding:22px 26px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
 
+    const headerRow = document.createElement("div");
+    headerRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;";
+
     const title = document.createElement("div");
     const titleColors = getThemeColors();
-    title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:20px;color:${titleColors.text};margin-bottom:14px;font-weight:600;flex-shrink:0;`;
+    title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:20px;color:${titleColors.text};font-weight:600;`;
     title.className = "luatools-title";
     const dlTitleIcon = document.createElement("i");
     dlTitleIcon.className = "fa-solid fa-cloud-arrow-down";
@@ -2779,6 +2782,19 @@
     const dlTitleText = document.createElement("span");
     dlTitleText.textContent = lt("Select Download Source");
     title.appendChild(dlTitleText);
+
+    const topCloseBtn = document.createElement("a");
+    topCloseBtn.href = "#";
+    topCloseBtn.title = t("common.cancel", lt("Cancel"));
+    topCloseBtn.style.cssText = `display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:rgba(255,92,92,0.12);border:1px solid rgba(255,92,92,0.35);color:#ff6b6b;font-size:15px;text-decoration:none;cursor:pointer;transition:all 0.2s;flex-shrink:0;`;
+    topCloseBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    topCloseBtn.onclick = function (e) {
+      e.preventDefault();
+      cancelOperation(true);
+    };
+
+    headerRow.appendChild(title);
+    headerRow.appendChild(topCloseBtn);
 
     // API list container
     const apiListContainer = document.createElement("div");
@@ -2880,21 +2896,21 @@
 
     const btnRow = document.createElement("div");
     btnRow.style.cssText =
-      "margin-top:20px;display:flex;gap:8px;justify-content:center;";
+      "margin-top:16px;display:flex;gap:10px;justify-content:center;flex-shrink:0;";
     const cancelBtn = document.createElement("a");
     cancelBtn.className = "luatools-btn luatools-cancel-btn";
     cancelBtn.style.cssText =
-      "display:none;align-items:center;justify-content:center;text-align:center;";
-    cancelBtn.innerHTML = `<span>${lt("Cancel")}</span>`;
+      "display:flex;align-items:center;justify-content:center;text-align:center;min-width:120px;background:rgba(255,92,92,0.14);border:1px solid rgba(255,92,92,0.45);color:#ff7b7b;";
+    cancelBtn.innerHTML = `<i class="fa-solid fa-ban" style="margin-right:6px;"></i><span>${t("common.cancel", lt("Cancel"))}</span>`;
     cancelBtn.href = "#";
     cancelBtn.onclick = function (e) {
       e.preventDefault();
-      cancelOperation();
+      cancelOperation(true);
     };
     const hideBtn = document.createElement("a");
     hideBtn.className = "luatools-btn luatools-hide-btn";
     hideBtn.style.cssText =
-      "display:flex;align-items:center;justify-content:center;text-align:center;";
+      "display:flex;align-items:center;justify-content:center;text-align:center;min-width:120px;";
     hideBtn.innerHTML = `<span>${lt("Hide")}</span>`;
     hideBtn.href = "#";
     hideBtn.onclick = function (e) {
@@ -2904,7 +2920,7 @@
     btnRow.appendChild(cancelBtn);
     btnRow.appendChild(hideBtn);
 
-    modal.appendChild(title);
+    modal.appendChild(headerRow);
     modal.appendChild(apiListContainer);
     modal.appendChild(body);
     modal.appendChild(progressWrap);
@@ -2924,7 +2940,8 @@
       overlay.remove();
     }
 
-    function cancelOperation() {
+    function cancelOperation(closeImmediately) {
+      overlay.dataset.cancelled = "1";
       // Call backend to cancel the operation
       try {
         const match =
@@ -2948,6 +2965,13 @@
           });
         }
       } catch (_) {}
+      // Reset run state
+      runState.inProgress = false;
+      runState.appid = null;
+      if (closeImmediately) {
+        overlay.remove();
+        return;
+      }
       // Update UI to show cancelled
       const status = overlay.querySelector(".luatools-status");
       if (status) status.textContent = lt("Cancelled");
@@ -2960,9 +2984,6 @@
       const progressInfo = overlay.querySelector(".luatools-progress-info");
       if (wrap) wrap.style.display = "none";
       if (progressInfo) progressInfo.style.display = "none";
-      // Reset run state
-      runState.inProgress = false;
-      runState.appid = null;
     }
   }
 
@@ -6294,7 +6315,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.7";
+      heroTitle.textContent = "ManifestAdvTools v8.4.8";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -7384,16 +7405,23 @@
     statusLabel.style.cssText = "text-align:center;font-size:13px;color:" + theme.textSecondary + ";margin-bottom:20px;";
     statusLabel.textContent = lt("Starting download…", "Starting download…");
 
-    // Close button (disabled until done)
+    // Action button (acts as Cancel while downloading, then Close when done)
     var closeBtn = document.createElement("button");
     closeBtn.style.cssText = [
-      "width:100%;padding:11px;border-radius:10px;border:none;cursor:not-allowed;",
-      "background:rgba(255,255,255,0.08);color:" + theme.textSecondary + ";font-size:14px;font-weight:600;",
+      "width:100%;padding:11px;border-radius:10px;border:1px solid rgba(239,68,68,0.45);cursor:pointer;",
+      "background:rgba(239,68,68,0.16);color:#f87171;font-size:14px;font-weight:600;",
       "transition:all 0.2s ease;"
     ].join("");
-    closeBtn.textContent = lt("Please wait…", "Please wait…");
-    closeBtn.disabled = true;
+    closeBtn.textContent = "✕ " + t("common.cancel", lt("Cancelar", "Cancel"));
+    closeBtn.disabled = false;
     closeBtn.onclick = function () {
+      overlay.dataset.cancelled = "1";
+      try {
+        Millennium.callServerMethod("ManifestAdvTools", "CancelAddViaLuaTools", {
+          appid: appid,
+          contentScriptQuery: ""
+        });
+      } catch (_) {}
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     };
 
@@ -8284,10 +8312,16 @@ function addLuaToolsButton() {
               })
                 .then(function (res) {
                   try {
+                    if (overlay && overlay.dataset && overlay.dataset.cancelled === "1") {
+                      return;
+                    }
                     const payload =
                       typeof res === "string" ? JSON.parse(res) : res;
+                    if (payload && payload.cancelled) {
+                      return;
+                    }
                     if (!payload || !payload.success) {
-                      throw new Error(payload.error || "Check failed");
+                      throw new Error((payload && payload.error) || "Check failed");
                     }
 
                     const results = payload.results || [];

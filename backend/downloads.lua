@@ -14,6 +14,7 @@ local fixes            = require("fixes")
 
 local downloads = {}
 local DOWNLOAD_STATE = {}
+local CANCELLED_APPS = {}
 
 local function _set_download_state(appid, update)
     if type(appid) == "string" then appid = tonumber(appid) end
@@ -197,6 +198,7 @@ function downloads.cancel_add(appid)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = true } end
 
+    CANCELLED_APPS[appid] = true
     bg_job.cancel(tostring(appid), "Cancelled by user")
     bg_job.cancel("fix_" .. tostring(appid), "Cancelled by user")
     _set_download_state(appid, { status = "cancelled", error = "Cancelled by user" })
@@ -206,6 +208,7 @@ end
 function downloads.start_add_via_luatools_from_url(appid, url, apiName)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = false, error = "Invalid appid" } end
+    CANCELLED_APPS[appid] = nil
 
     if not url or url == "" then
         url, apiName = downloads.find_manifest_url_for_app(appid)
@@ -314,6 +317,7 @@ end
 function downloads.check_apis_for_app(appid)
     if type(appid) == "string" then appid = tonumber(appid) end
     if not appid then return { success = false, error = "Invalid appid" } end
+    CANCELLED_APPS[appid] = nil
 
     local apis = api_manifest.load_api_manifest()
     if not apis or #apis == 0 then
@@ -325,6 +329,10 @@ function downloads.check_apis_for_app(appid)
     local morrenus_api_key = settings_manager.get_morrenus_api_key()
 
     for _, api in ipairs(apis) do
+        if CANCELLED_APPS[appid] then
+            return { success = false, cancelled = true, error = "Cancelled by user" }
+        end
+
         local name = api.name or "Unknown"
         local template = api.url or ""
         local success_code = tonumber(api.success_code) or 200
@@ -347,22 +355,24 @@ function downloads.check_apis_for_app(appid)
 
         if string.lower(name) == "morrenus" then
             local status_url = "https://hubcapmanifest.com/api/v1/status/" .. tostring(appid) .. "?api_key=" .. tostring(morrenus_api_key)
-            local resp = http_client.get(status_url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+            local resp = http_client.get(status_url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 2 })
             if resp and resp.status == success_code then
                 available = true
             end
         elseif string.find(url, "codeload%.github%.com") then
             -- Fast check for GitHub branch-per-appid repos: probe <appid>.lua via raw.githubusercontent.com first
             local owner, repo, branch = url:match("codeload%.github%.com/([^/]+)/([^/]+)/zip/refs/heads/([^/?#]+)")
+            local probe_status = 0
             if owner and repo and branch then
                 local probe_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/" .. branch .. "/" .. tostring(appid) .. ".lua"
-                local p_resp = http_client.head(probe_url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
-                if p_resp and p_resp.status == 200 then
+                local p_resp = http_client.head(probe_url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 2 })
+                probe_status = p_resp and tonumber(p_resp.status) or 0
+                if probe_status == 200 then
                     available = true
                 end
             end
-            if not available then
-                local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+            if not available and probe_status ~= 404 then
+                local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 2 })
                 if resp and resp.status == success_code then
                     local ok_v, res_u = _validate_manifest_response(resp, url)
                     if ok_v then
@@ -372,7 +382,7 @@ function downloads.check_apis_for_app(appid)
                 end
             end
         else
-            local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+            local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 2 })
             if resp and resp.status == success_code then
                 local ok_v, res_u = _validate_manifest_response(resp, url)
                 if ok_v then
@@ -382,7 +392,7 @@ function downloads.check_apis_for_app(appid)
             else
                 local st = resp and tonumber(resp.status) or 0
                 if st == 0 or st == 405 or st == 501 then
-                    local get_resp = http_client.get(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+                    local get_resp = http_client.get(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 2 })
                     if get_resp and get_resp.status == success_code then
                         local ok_v, res_u = _validate_manifest_response(get_resp, url)
                         if ok_v then
@@ -403,6 +413,11 @@ function downloads.check_apis_for_app(appid)
             available = available,
             url = available and url or nil
         })
+
+        -- Once we have 3 verified available sources, stop blocking on remaining slow APIs
+        if #available_sources >= 3 then
+            break
+        end
 
         ::continue::
     end
