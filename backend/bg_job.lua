@@ -29,6 +29,10 @@ local function fwd(p)
     return (tostring(p or ""):gsub("\\", "/"))
 end
 
+local function win_slash(p)
+    return (tostring(p or ""):gsub("/", "\\"))
+end
+
 --- Quote a string as a PowerShell single-quoted literal (escapes embedded quotes).
 local function ps_quote(s)
     return "'" .. (tostring(s or ""):gsub("'", "''")) .. "'"
@@ -62,7 +66,7 @@ function Set-State([string]$s, [string]$e, [int]$br = 0, [int]$tb = 100) {
 }
 try {
     [IO.File]::WriteAllText($pf, [string]$PID)
-    Set-State 'downloading' '' 45 100
+    Set-State 'downloading' '' 55 100
     if (Test-Path -LiteralPath $dp) { Remove-Item -LiteralPath $dp -Force -ErrorAction SilentlyContinue }
     $dlOk = $false
     if ($url -match '^https?://' -and (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
@@ -194,7 +198,8 @@ function bg_job.launch(opts)
     -- Clean leftovers of previous runs
     pcall(fs.remove, f.list)
     pcall(fs.remove, f.zip)
-    m_utils.write_file(f.state, '{"status":"downloading","bytesRead":35,"totalBytes":100}')
+    pcall(fs.remove, f.pid)
+    m_utils.write_file(f.state, '{"status":"queued","bytesRead":35,"totalBytes":100}')
 
     local ua = opts.user_agent or "ManifestAdvTools"
     local list_file = opts.record_files and f.list or ""
@@ -219,10 +224,12 @@ function bg_job.launch(opts)
         m_utils.write_file(f.script, UTF8_BOM .. header .. body)
 
         local vbs_path = fs.join(paths.get_plugin_dir(), "backend", "silent_run.vbs")
+        local win_vbs = win_slash(vbs_path)
+        local win_script = win_slash(f.script)
         if fs.exists(vbs_path) then
-            m_utils.exec('wscript.exe //b //nologo "' .. vbs_path .. '" "' .. f.script .. '"')
+            m_utils.exec('wscript.exe //b //nologo "' .. win_vbs .. '" "' .. win_script .. '"')
         else
-            m_utils.exec('powershell.exe -NoLogo -NoProfile -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. f.script .. '"')
+            m_utils.exec('powershell.exe -NoLogo -NoProfile -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. win_script .. '"')
         end
     else
         local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
@@ -241,12 +248,31 @@ function bg_job.read_state(id)
     local f = bg_job.files_for(id)
     if not fs.exists(f.state) then return {} end
     local c = m_utils.read_file(f.state)
-    if not c or c == "" then return { status = "downloading", bytesRead = 35, totalBytes = 100 } end
+    if not c or c == "" then return { status = "downloading", bytesRead = 45, totalBytes = 100 } end
     -- strip BOM if any
     if c:sub(1, 3) == UTF8_BOM then c = c:sub(4) end
     local ok, d = pcall(cjson.decode, c)
-    if ok and type(d) == "table" then return d end
-    return { status = "downloading", bytesRead = 35, totalBytes = 100 }
+    if not (ok and type(d) == "table") then
+        return { status = "downloading", bytesRead = 45, totalBytes = 100 }
+    end
+
+    -- Fallback if wscript.exe was blocked by Windows Script Host / Defender and PowerShell never started:
+    if d.status == "queued" and is_windows() then
+        if not d.FallbackReady then
+            m_utils.write_file(f.state, '{"status":"queued","bytesRead":45,"totalBytes":100,"FallbackReady":true}')
+            return { status = "downloading", bytesRead = 45, totalBytes = 100 }
+        elseif not fs.exists(f.pid) and fs.exists(f.script) then
+            local win_script = win_slash(f.script)
+            m_utils.exec('powershell.exe -NoLogo -NoProfile -WindowStyle Hidden -NonInteractive -ExecutionPolicy Bypass -File "' .. win_script .. '"')
+            local c2 = m_utils.read_file(f.state) or ""
+            if c2:sub(1, 3) == UTF8_BOM then c2 = c2:sub(4) end
+            local ok2, d2 = pcall(cjson.decode, c2)
+            if ok2 and type(d2) == "table" then return d2 end
+        end
+        return { status = "downloading", bytesRead = 50, totalBytes = 100 }
+    end
+
+    return d
 end
 
 function bg_job.write_state(id, tbl)

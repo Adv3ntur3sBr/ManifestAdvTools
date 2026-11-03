@@ -1381,14 +1381,22 @@
            "Central da Comunidade"); only a small theme-coloured icon marks them */
         /* Long source lists scroll inside the dialog instead of running off screen.
            Inline cssText on the list gets reset while downloading, so this lives here */
-        .luatools-overlay .luatools-api-list {
-          max-height: min(46vh, 440px) !important;
+        .luatools-overlay .luatools-api-list,
+        #luatools-api-list {
+          max-height: min(36vh, 240px) !important;
           overflow-y: auto !important;
+          overflow-x: hidden !important;
           overscroll-behavior: contain;
-          padding-right: 6px;
+          padding-right: 6px !important;
         }
-        .luatools-overlay .luatools-api-list::-webkit-scrollbar { width: 8px; }
-        .luatools-overlay .luatools-api-list::-webkit-scrollbar-thumb { background: rgba(${colors.rgbString}, 0.45); border-radius: 4px; }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar,
+        #luatools-api-list::-webkit-scrollbar { width: 8px; }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar-track,
+        #luatools-api-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); border-radius: 4px; }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar-thumb,
+        #luatools-api-list::-webkit-scrollbar-thumb { background: rgba(${colors.rgbString}, 0.55); border-radius: 4px; }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar-thumb:hover,
+        #luatools-api-list::-webkit-scrollbar-thumb:hover { background: rgba(${colors.rgbString}, 0.8); }
 
         .lt-store-ico {
           margin-right: 7px;
@@ -2334,7 +2342,22 @@
                     typeof res === "string" ? JSON.parse(res) : res;
                   const detail = payload && (payload.message || payload.error);
                   const msg = detail ? String(detail) : lt("No updates available.");
-                  ShowLuaToolsAlert("ManifestAdvTools", msg);
+                  if (payload && payload.updated) {
+                    showLuaToolsConfirm(
+                      "ManifestAdvTools",
+                      msg + "\n\nDeseja reiniciar a Steam agora para aplicar a atualização?",
+                      function () {
+                        try {
+                          Millennium.callServerMethod("ManifestAdvTools", "RestartSteam", {
+                            contentScriptQuery: "",
+                          });
+                        } catch (_) {}
+                      },
+                      function () {}
+                    );
+                  } else {
+                    ShowLuaToolsAlert("ManifestAdvTools", msg);
+                  }
                 } catch (_) {}
               }).catch(function () {
                 ShowLuaToolsAlert(
@@ -2356,7 +2379,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.5\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.6\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -2743,11 +2766,11 @@
 
     const modal = document.createElement("div");
     const colors = getThemeColors();
-    modal.style.cssText = `background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:520px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;padding:28px 32px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
+    modal.style.cssText = `background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:520px;max-width:calc(100vw - 32px);max-height:85vh;display:flex;flex-direction:column;padding:22px 26px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
 
     const title = document.createElement("div");
     const titleColors = getThemeColors();
-    title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:20px;color:${titleColors.text};margin-bottom:16px;font-weight:600;`;
+    title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:20px;color:${titleColors.text};margin-bottom:14px;font-weight:600;flex-shrink:0;`;
     title.className = "luatools-title";
     const dlTitleIcon = document.createElement("i");
     dlTitleIcon.className = "fa-solid fa-cloud-arrow-down";
@@ -2760,7 +2783,7 @@
     // API list container
     const apiListContainer = document.createElement("div");
     apiListContainer.className = "luatools-api-list";
-    apiListContainer.style.cssText = "margin-bottom:16px;";
+    apiListContainer.style.cssText = "margin-bottom:14px;max-height:240px;overflow-y:auto;overflow-x:hidden;padding-right:6px;";
 
     // Placeholder while loading APIs
     const loadingItem = document.createElement("div");
@@ -2793,16 +2816,16 @@
                 const apiItem = document.createElement("div");
                 apiItem.className = `luatools-api-item luatools-api-${index}`;
                 apiItem.setAttribute("data-api-name", api.name);
-                apiItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(${colors.rgbString},0.1);border:1px solid ${colors.borderRgba};border-radius:6px;transition:all 0.2s;`;
+                apiItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;background:rgba(${colors.rgbString},0.1);border:1px solid ${colors.borderRgba};border-radius:6px;transition:all 0.2s;`;
 
                 const apiName = document.createElement("div");
                 apiName.className = "luatools-api-name";
-                apiName.style.cssText = `font-size:14px;color:${colors.textSecondary};font-weight:500;`;
+                apiName.style.cssText = `font-size:13px;color:${colors.textSecondary};font-weight:500;`;
                 apiName.textContent = api.name;
 
                 const apiStatus = document.createElement("div");
                 apiStatus.className = "luatools-api-status";
-                apiStatus.style.cssText = `font-size:14px;color:${colors.textSecondary};display:flex;align-items:center;gap:6px;`;
+                apiStatus.style.cssText = `font-size:13px;color:${colors.textSecondary};display:flex;align-items:center;gap:6px;`;
                 apiStatus.innerHTML =
                   "<span>" +
                   lt("Waiting…") +
@@ -5626,6 +5649,7 @@
 
       const listEl = document.createElement("div");
       listEl.id = "luatools-api-list";
+      listEl.style.cssText = "max-height:280px;overflow-y:auto;overflow-x:hidden;padding-right:6px;";
       listEl.innerHTML = `<div style="padding:16px;text-align:center;color:${c.textSecondary};font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>Carregando fontes...</div>`;
       sectionEl.appendChild(listEl);
 
@@ -6270,7 +6294,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.5";
+      heroTitle.textContent = "ManifestAdvTools v8.4.6";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -7776,6 +7800,7 @@ function addLuaToolsButton() {
         } catch (_) {}
         bundleBtn.addEventListener("click", function (e) {
           e.preventDefault();
+          e.stopPropagation();
           try {
             const urlMatch = window.location.href.match(
               /https?:\/\/store\.steampowered\.com\/app\/(\d+)/
@@ -8212,7 +8237,7 @@ function addLuaToolsButton() {
       // Quick exit if target doesn't have closest method or isn't an element
       if (!evt.target || !evt.target.closest) return;
 
-      const anchor = evt.target.closest(".luatools-button");
+      const anchor = evt.target.closest(".luatools-button:not(.luatools-bundle-btn)");
       if (anchor) {
         evt.preventDefault();
         evt.stopPropagation(); // Stop propagation to avoid conflicts
@@ -8527,7 +8552,7 @@ function addLuaToolsButton() {
               if (apiList) {
                 apiList.innerHTML = "";
                 apiList.style.cssText =
-                  "display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px;";
+                  "display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-height:240px; overflow-y:auto; overflow-x:hidden; padding-right:6px;";
 
                 available.forEach((source) => {
                   const btn = document.createElement("a");
@@ -8705,6 +8730,7 @@ function addLuaToolsButton() {
                     item.style.background = `rgba(${colors.rgbString},0.2)`;
                     item.style.borderColor = colors.accent;
                     apiStatus.innerHTML = `<span style="color:${colors.accent};">${lt("Found")}</span><i class="fa-solid fa-check" style="color:${colors.accent};"></i>`;
+                    try { item.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (_) {}
                   } else if (!foundSuccessful) {
                     // This API comes before the successful one, check if it has an error first
                     if (st.apiErrors && st.apiErrors[apiName]) {

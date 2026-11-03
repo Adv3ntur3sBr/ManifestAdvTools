@@ -105,7 +105,7 @@ function auto_update.check_for_updates_now()
 
     local current_version = utils.get_plugin_version()
     if compare_versions(latest_version, current_version) <= 0 then
-        return { success = true, message = "ManifestAdvTools já está na versão mais recente (" .. current_version .. ")." }
+        return { success = true, updated = false, message = "ManifestAdvTools já está na versão mais recente (" .. current_version .. ")." }
     end
 
     local pending_zip = paths.backend_path(config.UPDATE_PENDING_ZIP)
@@ -117,11 +117,13 @@ function auto_update.check_for_updates_now()
     -- exec() gives no exit code, so download and extract are separate steps
     -- and the zip's presence is the success check. -f keeps HTTP errors
     -- (404, rate limit) from being saved as the zip.
-    local is_windows = m_utils.getenv("OS") == "Windows_NT"
+    local is_windows = (package and package.config and package.config:sub(1, 1) == "\\") or (m_utils.getenv("OS") == "Windows_NT")
     local download_cmd, extract_cmd
     if is_windows then
-        download_cmd = string.format('curl.exe -sfL -A "ManifestAdvTools" "%s" -o "%s"', zip_url, pending_zip)
-        extract_cmd = string.format('tar.exe -xf "%s" -C "%s"', pending_zip, plugin_dir)
+        local win_zip = pending_zip:gsub("/", "\\")
+        local win_dir = plugin_dir:gsub("/", "\\")
+        download_cmd = string.format('curl.exe -sfL -A "ManifestAdvTools" "%s" -o "%s"', zip_url, win_zip)
+        extract_cmd = string.format('tar.exe -xf "%s" -C "%s"', win_zip, win_dir)
     else
         download_cmd = string.format('curl -sfL -o "%s" "%s"', pending_zip, zip_url)
         extract_cmd = string.format('unzip -o -q "%s" -d "%s"', pending_zip, plugin_dir)
@@ -134,9 +136,33 @@ function auto_update.check_for_updates_now()
     end
 
     m_utils.exec(extract_cmd)
-    fs.remove(pending_zip)
+    pcall(fs.remove, pending_zip)
 
-    return { success = true, message = "ManifestAdvTools atualizado de " .. current_version .. " para " .. latest_version .. "! Reinicie a Steam para aplicar." }
+    -- Also sync updated JS to steamui/webkit and .millennium/Dist immediately
+    pcall(function()
+        local src_js = fs.join(plugin_dir, "public", "manifestadvtools.js")
+        if fs.exists(src_js) then
+            local content = m_utils.read_file(src_js)
+            if content and content ~= "" then
+                local dist_js = fs.join(plugin_dir, ".millennium", "Dist", "webkit.js")
+                m_utils.write_file(dist_js, content)
+                local steam_dir = steam_utils.detect_steam_install_path()
+                if steam_dir and steam_dir ~= "" then
+                    local wk_dir = fs.join(steam_dir, "steamui", "webkit")
+                    if fs.exists(wk_dir) then
+                        m_utils.write_file(fs.join(wk_dir, "manifestadvtools.js"), content)
+                        m_utils.write_file(fs.join(wk_dir, "luatools.js"), content)
+                    end
+                end
+            end
+        end
+    end)
+
+    return {
+        success = true,
+        updated = true,
+        message = "ManifestAdvTools atualizado de " .. current_version .. " para " .. latest_version .. "! Reinicie a Steam para aplicar."
+    }
 end
 
 -- The backend runs inside Steam, so anything it spawns dies with Steam's
@@ -158,7 +184,7 @@ try {
 ]==]
 
 function auto_update.restart_steam()
-    local is_windows = m_utils.getenv("OS") == "Windows_NT"
+    local is_windows = (package and package.config and package.config:sub(1, 1) == "\\") or (m_utils.getenv("OS") == "Windows_NT")
     if is_windows then
         local script_path = paths.backend_path("restart_steam.cmd")
         if fs.exists(script_path) then
