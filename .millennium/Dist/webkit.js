@@ -7076,6 +7076,43 @@
     }
   }
   // ─────────────────────────────────────────────────────────────────────────────
+// Steam renames its hashed CSS-module classes on client updates (the old
+// "._1wn1lBlAzl3HMRqS1llwie" store header), which silently hid the menu
+// button. Try that class, then anchor on stable header links, then dock the
+// button in a corner so it is always reachable on the store.
+let headerLookupMisses = 0;
+function findStoreHeaderContainer() {
+    const legacy = document.querySelector("._1wn1lBlAzl3HMRqS1llwie");
+    if (legacy) return legacy;
+
+    const header = document.querySelector(
+      "#store_header, #global_header, #store_nav_area, header",
+    );
+    if (header) {
+      const anchor = header.querySelector(
+        '#store_header_cart_btn, #wishlist_link, a[href*="/cart"], a[href*="/wishlist"]',
+      );
+      if (anchor && anchor.parentElement) return anchor.parentElement;
+    }
+
+    // addLuaToolsButton runs on load, at 1s and 3s: give the header a few
+    // tries to render before docking.
+    headerLookupMisses++;
+    if (headerLookupMisses < 3) return null;
+    if (!window.location.hostname.includes("steampowered.com")) return null;
+
+    let dock = document.getElementById("luatools-floating-dock");
+    if (!dock) {
+      dock = document.createElement("div");
+      dock.id = "luatools-floating-dock";
+      dock.style.cssText =
+        "position:fixed;left:16px;bottom:16px;z-index:99999;display:flex;";
+      document.body.appendChild(dock);
+      backendLog("Store header not found, docking menu button");
+    }
+    return dock;
+}
+
 function addLuaToolsButton() {
     // Throttle to prevent blocking gamepad input
     const now = Date.now();
@@ -7102,7 +7139,7 @@ function addLuaToolsButton() {
     }
 
     // Store Header Button Logic (always visible)
-    const headerContainer = document.querySelector("._1wn1lBlAzl3HMRqS1llwie");
+    const headerContainer = findStoreHeaderContainer();
     if (
       headerContainer &&
       !document.querySelector(".luatools-header-button") &&
@@ -7145,6 +7182,9 @@ function addLuaToolsButton() {
         showSettingsPopup();
       };
 
+      if (headerContainer.id === "luatools-floating-dock") {
+        headerBtn.style.marginLeft = "0";
+      }
       headerContainer.appendChild(headerBtn);
       window.__LuaToolsHeaderInserted = true;
       backendLog("Inserted store header button");
