@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Single source of truth: <body data-version / data-repo>
   const currentVersion = "v" + (document.body.dataset.version || "0.0.0").replace(/^v/, "");
-  const repo = document.body.dataset.repo || "l89699756-design/ManifestAdvTools";
+  const repo = document.body.dataset.repo || "Adv3ntur3sBr/ManifestAdvTools";
   const repoUrl = `https://github.com/${repo}`;
   const CACHE_KEY = "mat:latest-release";
   const CACHE_TTL = 10 * 60 * 1000; // 10 min — avoids GitHub's 60 req/h anonymous limit
@@ -51,10 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Copy command to clipboard (with fallback for non-secure contexts / file://)
-  const copyBtn = $("copyBtn");
-  const copyIcon = $("copyIcon");
-  const copyText = $("copyText");
-
   function fallbackCopy(text) {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -69,29 +65,33 @@ document.addEventListener("DOMContentLoaded", () => {
     return ok ? Promise.resolve() : Promise.reject(new Error("execCommand falhou"));
   }
 
-  if (copyBtn && installCmdText) {
-    copyBtn.addEventListener("click", () => {
-      const textToCopy = installCmdText.textContent.trim();
+  document.querySelectorAll("[data-copy]").forEach(btn => {
+    const source = $(btn.dataset.copy);
+    if (!source) return;
+    const icon = btn.querySelector("i");
+    const label = btn.querySelector("span");
+    btn.addEventListener("click", () => {
+      const textToCopy = source.textContent.trim();
       const copy = navigator.clipboard && window.isSecureContext
         ? navigator.clipboard.writeText(textToCopy).catch(() => fallbackCopy(textToCopy))
         : fallbackCopy(textToCopy);
 
       copy.then(() => {
-        copyBtn.classList.add("copied");
-        copyIcon.className = "fa-solid fa-check";
-        copyText.textContent = "Copiado!";
+        btn.classList.add("copied");
+        if (icon) icon.className = "fa-solid fa-check";
+        if (label) label.textContent = "Copiado!";
         showToast("Comando copiado! Cole no PowerShell e pressione Enter.");
         setTimeout(() => {
-          copyBtn.classList.remove("copied");
-          copyIcon.className = "fa-regular fa-clone";
-          copyText.textContent = "Copiar";
+          btn.classList.remove("copied");
+          if (icon) icon.className = "fa-regular fa-clone";
+          if (label) label.textContent = "Copiar";
         }, 2500);
       }).catch(err => {
         console.error("Falha ao copiar:", err);
         showToast("Não foi possível copiar. Selecione o comando manualmente.");
       });
     });
-  }
+  });
 
   // Update checker
   const checkUpdateBtn = $("checkUpdateBtn");

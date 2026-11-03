@@ -4,21 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ManifestAdvTools — Console de Manifestos para Steam</title>
-  <meta name="description" content="Plugin que vive dentro da Steam: busca manifestos em 7 fontes, aplica OnlineFix e troca o tema da biblioteca. Instalação em 1 comando.">
+  <meta name="description" content="Plugin que vive dentro da Steam: busca manifestos em 6 fontes, aplica OnlineFix e troca o tema da biblioteca. Instalação em 1 comando.">
   <meta name="theme-color" content="#0a131f">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
   <meta property="og:title" content="ManifestAdvTools — Console de Manifestos para Steam">
-  <meta property="og:description" content="Busca manifestos em 7 fontes, aplica OnlineFix e troca o tema da biblioteca. Instalação em 1 comando.">
+  <meta property="og:description" content="Busca manifestos em 6 fontes, aplica OnlineFix e troca o tema da biblioteca. Instalação em 1 comando.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a131f'/><rect x='5' y='5' width='22' height='22' rx='4' fill='none' stroke='%23ffb224' stroke-width='2'/><path d='M11 16h10M16 11v10' stroke='%23ffb224' stroke-width='2' stroke-linecap='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="index.css?v=9.0.0">
+  <link rel="stylesheet" href="index.css?v=9.1.0">
 </head>
-<body data-version="8.1.0" data-repo="l89699756-design/ManifestAdvTools">
+<body data-version="8.2.0" data-repo="Adv3ntur3sBr/ManifestAdvTools">
   <a href="#main" class="skip-link">Pular para o conteúdo</a>
   <div class="vignette" aria-hidden="true"></div>
 
@@ -27,7 +27,7 @@
       <a href="#top" class="brand" aria-label="ManifestAdvTools — início">
         <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
         <span class="brand-name">ManifestAdvTools</span>
-        <span class="brand-ver" data-version-label>v8.1.0</span>
+        <span class="brand-ver" data-version-label>v8.2.0</span>
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="navLinks">
         <i class="fa-solid fa-bars"></i>
@@ -37,7 +37,8 @@
         <a href="#sources" class="nav-link">Fontes</a>
         <a href="#capabilities" class="nav-link">Recursos</a>
         <a href="#updates" class="nav-link">Atualizações</a>
-        <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank" rel="noopener noreferrer" class="nav-git">
+        <a href="#uninstall" class="nav-link">Desinstalar</a>
+        <a href="https://github.com/Adv3ntur3sBr/ManifestAdvTools" target="_blank" rel="noopener noreferrer" class="nav-git">
           <i class="fa-brands fa-github"></i> GitHub
         </a>
       </div>
@@ -52,7 +53,7 @@
           <p class="kicker"><span class="live-dot"></span> Roda dentro da Steam, via Millennium</p>
           <h1 class="hero-title">O console que abastece a sua biblioteca da Steam.</h1>
           <p class="hero-sub">
-            Digita o AppID, o ManifestAdvTools varre 7 fontes públicas, injeta o manifesto e aplica
+            Digita o AppID, o ManifestAdvTools varre 6 fontes públicas, injeta o manifesto e aplica
             o OnlineFix. Sem editar arquivo na mão.
           </p>
 
@@ -61,15 +62,15 @@
               <span class="cmd-label"><i class="fa-solid fa-terminal"></i> PowerShell · instalação em 1 comando</span>
             </div>
             <div class="cmd-line">
-              <code id="installCommand"><span class="cmd-prompt" aria-hidden="true">PS&gt;</span> <span id="installCommandText">irm "https://raw.githubusercontent.com/l89699756-design/ManifestAdvTools/main/install-plugin.ps1" | iex</span></code>
-              <button id="copyBtn" class="copy-btn" type="button" title="Copiar comando">
+              <code id="installCommand"><span class="cmd-prompt" aria-hidden="true">PS&gt;</span> <span id="installCommandText">irm "https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/install-plugin.ps1" | iex</span></code>
+              <button id="copyBtn" class="copy-btn" type="button" data-copy="installCommandText" title="Copiar comando">
                 <i class="fa-regular fa-clone" id="copyIcon"></i><span id="copyText">Copiar</span>
               </button>
             </div>
           </div>
 
           <div class="hero-cta">
-            <a id="manualDownloadBtn" class="btn btn-ghost" href="https://github.com/l89699756-design/ManifestAdvTools/releases/latest" target="_blank" rel="noopener noreferrer">
+            <a id="manualDownloadBtn" class="btn btn-ghost" href="https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/latest" target="_blank" rel="noopener noreferrer">
               <i class="fa-solid fa-file-zipper"></i> Baixar ZIP
             </a>
             <a href="#how" class="btn btn-ghost">Ver como funciona</a>
@@ -81,7 +82,7 @@
         <aside class="console reveal" aria-label="Prévia do painel do plugin">
           <div class="console-top">
             <span class="console-title"><span class="brand-mark sm" aria-hidden="true"><i class="fa-solid fa-plus"></i></span> ManifestAdvTools</span>
-            <span class="console-ver" data-version-label>v8.1.0</span>
+            <span class="console-ver" data-version-label>v8.2.0</span>
           </div>
           <div class="console-row">
             <span class="console-key">AppID</span>
@@ -89,13 +90,13 @@
           </div>
           <div class="console-scan">
             <div class="scan-head">
-              <span>Varrendo fontes</span><span class="scan-count"><b id="scanOnline">7</b>/7 online</span>
+              <span>Varrendo fontes</span><span class="scan-count"><b id="scanOnline">6</b>/6 online</span>
             </div>
             <ul class="scan-list">
-              <li><span class="d on"></span> Ryuu <em>hit</em></li>
-              <li><span class="d on"></span> Raian Manifests</li>
+              <li><span class="d on"></span> Raian Manifests <em>hit</em></li>
               <li><span class="d on"></span> Sushi</li>
               <li><span class="d on"></span> GOG Pirate Repo</li>
+              <li><span class="d on"></span> LuaDepot Games</li>
             </ul>
           </div>
           <div class="console-foot">
@@ -106,7 +107,7 @@
       </div>
 
       <div class="hero-stats shell">
-        <div class="stat"><span class="stat-num">7</span><span class="stat-label">fontes com fallback</span></div>
+        <div class="stat"><span class="stat-num">6</span><span class="stat-label">fontes com fallback</span></div>
         <div class="stat"><span class="stat-num">11</span><span class="stat-label">temas da biblioteca</span></div>
         <div class="stat"><span class="stat-num">30+</span><span class="stat-label">idiomas</span></div>
         <div class="stat"><span class="stat-num">1</span><span class="stat-label">comando pra instalar</span></div>
@@ -128,7 +129,7 @@
           </li>
           <li class="pipe-step reveal">
             <span class="pipe-n">2</span>
-            <h3>Varre as 7 fontes</h3>
+            <h3>Varre as 6 fontes</h3>
             <p>Consulta os provedores em ordem, um por um, até achar o manifesto.</p>
           </li>
           <li class="pipe-step reveal">
@@ -154,11 +155,10 @@
     <section class="section" id="sources">
       <div class="shell">
         <div class="sec-head">
-          <h2 class="sec-title">As 7 fontes, com fallback automático</h2>
+          <h2 class="sec-title">As 6 fontes, com fallback automático</h2>
           <p class="sec-lead">Se uma fonte sair do ar, o plugin passa pra próxima sem você perceber.</p>
         </div>
         <div class="rack">
-          <div class="rack-item reveal"><span class="d on"></span><span class="rack-name">Ryuu</span><span class="rack-tag">API</span></div>
           <div class="rack-item reveal"><span class="d on"></span><span class="rack-name">Raian Manifests</span><span class="rack-tag">repo</span></div>
           <div class="rack-item reveal"><span class="d on"></span><span class="rack-name">Sushi</span><span class="rack-tag">repo</span></div>
           <div class="rack-item reveal"><span class="d on"></span><span class="rack-name">GOG Pirate Repo</span><span class="rack-tag">repo</span></div>
@@ -231,7 +231,7 @@
             <div class="repo">
               <i class="fa-brands fa-github"></i>
               <div>
-                <div class="repo-name" id="projectName">l89699756-design / ManifestAdvTools</div>
+                <div class="repo-name" id="projectName">Adv3ntur3sBr / ManifestAdvTools</div>
                 <div class="repo-sub">repositório oficial</div>
               </div>
             </div>
@@ -241,7 +241,7 @@
           </div>
 
           <div class="readout-grid">
-            <div class="ro"><span class="ro-k">Versão do site</span><span class="ro-v" id="currentVerDisplay" data-version-label>v8.1.0</span></div>
+            <div class="ro"><span class="ro-k">Versão do site</span><span class="ro-v" id="currentVerDisplay" data-version-label>v8.2.0</span></div>
             <div class="ro"><span class="ro-k">Mais recente</span><span class="ro-v steel" id="latestVerDisplay">—</span></div>
             <div class="ro"><span class="ro-k">Status</span><span class="status" id="statusBadge" role="status" aria-live="polite"><i class="fa-solid fa-hourglass-half"></i> Pronto</span></div>
           </div>
@@ -261,13 +261,33 @@
         </div>
       </div>
     </section>
+    <!-- UNINSTALL — restore Steam to original -->
+    <section class="section" id="uninstall">
+      <div class="shell">
+        <div class="sec-head">
+          <h2 class="sec-title">Quer tirar tudo?</h2>
+          <p class="sec-lead">Um comando remove Millennium, Steamtools, ManifestAdvTools e os scripts Lua. A Steam volta ao original. Seus jogos e sua conta não são tocados.</p>
+        </div>
+        <div class="cmd cmd-danger reveal">
+          <div class="cmd-bar">
+            <span class="cmd-label"><i class="fa-solid fa-trash-can"></i> PowerShell · desinstalar e restaurar a Steam</span>
+          </div>
+          <div class="cmd-line">
+            <code><span class="cmd-prompt" aria-hidden="true">PS&gt;</span> <span id="uninstallCommandText">powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/uninstall.ps1 | iex"</span></code>
+            <button class="copy-btn" type="button" data-copy="uninstallCommandText" title="Copiar comando de desinstalação">
+              <i class="fa-regular fa-clone"></i><span>Copiar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
     <div class="shell footer-shell">
       <span class="footer-brand"><strong>ManifestAdvTools</strong> © <span id="year">2026</span> · feito pra comunidade gamer</span>
       <span class="footer-links">
-        <a href="https://github.com/l89699756-design/ManifestAdvTools" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> GitHub</a>
+        <a href="https://github.com/Adv3ntur3sBr/ManifestAdvTools" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> GitHub</a>
         <a href="https://discord.gg/luatools" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-discord"></i> Discord</a>
         <a href="#top" class="to-top" aria-label="Voltar ao topo"><i class="fa-solid fa-arrow-up"></i></a>
       </span>
@@ -275,6 +295,6 @@
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="index.js?v=9.0.0" defer></script>
+  <script src="index.js?v=9.1.0" defer></script>
 </body>
 </html>

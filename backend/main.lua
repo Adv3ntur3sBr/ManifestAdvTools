@@ -49,9 +49,6 @@ local function copy_webkit_files()
 
     local js_name = config.WEB_UI_JS_FILE or "manifestadvtools.js"
     local src_js = fs.join(public_dir, js_name)
-    if not fs.exists(src_js) then
-        src_js = fs.join(public_dir, "luatools.js")
-    end
     if fs.exists(src_js) then
         local content = m_utils.read_file(src_js)
         if content then

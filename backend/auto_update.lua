@@ -39,7 +39,7 @@ function auto_update.check_for_updates_now()
         if resp and resp.status == 200 and resp.body then
             local data = utils.decode_json(resp.body)
             local tag_name = data.tag_name or ""
-            latest_version = tag_name or data.name or ""
+            latest_version = (tag_name ~= "" and tag_name) or data.name or ""
             if tag_prefix ~= "" and latest_version:sub(1, #tag_prefix) == tag_prefix then
                 latest_version = latest_version:sub(#tag_prefix + 1)
             end
@@ -82,18 +82,32 @@ function auto_update.check_for_updates_now()
     end
     
     local pending_zip = paths.backend_path(config.UPDATE_PENDING_ZIP)
-    
-    local is_windows = m_utils.getenv("OS") == "Windows_NT"
-    local cmd
-    if is_windows then
-        cmd = string.format('curl.exe -sL -A "ManifestAdvTools" "%s" -o "%s" && tar.exe -xf "%s" -C "%s"', zip_url, pending_zip, pending_zip, paths.get_plugin_dir())
-    else
-        cmd = string.format('curl -L -o "%s" "%s" && unzip -o -q "%s" -d "%s"', pending_zip, zip_url, pending_zip, paths.get_plugin_dir())
-    end
-    
-    m_utils.exec(cmd)
-    
+    local plugin_dir = paths.get_plugin_dir()
+
+    -- Drop any leftover zip so a stale file can't pass for a fresh download
     if fs.exists(pending_zip) then fs.remove(pending_zip) end
+
+    -- exec() gives no exit code, so download and extract are separate steps
+    -- and the zip's presence is the success check. -f keeps HTTP errors
+    -- (404, rate limit) from being saved as the zip.
+    local is_windows = m_utils.getenv("OS") == "Windows_NT"
+    local download_cmd, extract_cmd
+    if is_windows then
+        download_cmd = string.format('curl.exe -sfL -A "ManifestAdvTools" "%s" -o "%s"', zip_url, pending_zip)
+        extract_cmd = string.format('tar.exe -xf "%s" -C "%s"', pending_zip, plugin_dir)
+    else
+        download_cmd = string.format('curl -sfL -o "%s" "%s"', pending_zip, zip_url)
+        extract_cmd = string.format('unzip -o -q "%s" -d "%s"', pending_zip, plugin_dir)
+    end
+
+    m_utils.exec(download_cmd)
+    if not fs.exists(pending_zip) then
+        logger.warn("auto_update: download failed: " .. zip_url)
+        return { success = false, error = "Falha ao baixar a atualização " .. latest_version .. ". Tente de novo mais tarde." }
+    end
+
+    m_utils.exec(extract_cmd)
+    fs.remove(pending_zip)
     
     local msg = "ManifestAdvTools atualizado com sucesso para " .. latest_version .. "! Reinicie o Steam."
     return { success = true, message = msg }

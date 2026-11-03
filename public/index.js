@@ -1,177 +1,260 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const currentVersion = "v8.2.0";
-  const repoOwner = "Adv3ntur3sBr";
-  const repoName = "ManifestAdvTools";
+  // Single source of truth: <body data-version / data-repo>
+  const currentVersion = "v" + (document.body.dataset.version || "0.0.0").replace(/^v/, "");
+  const repo = document.body.dataset.repo || "Adv3ntur3sBr/ManifestAdvTools";
+  const repoUrl = `https://github.com/${repo}`;
+  const CACHE_KEY = "mat:latest-release";
+  const CACHE_TTL = 10 * 60 * 1000; // 10 min — avoids GitHub's 60 req/h anonymous limit
 
-  // Elements
-  const copyBtn = document.getElementById("copyBtn");
-  const copyIcon = document.getElementById("copyIcon");
-  const copyText = document.getElementById("copyText");
-  const installCmd = document.getElementById("installCommand");
+  const $ = id => document.getElementById(id);
+
+  document.querySelectorAll("[data-version-label]").forEach(el => (el.textContent = currentVersion));
+  const yearEl = $("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // Toast
+  const toast = $("toast");
+  let toastTimer;
+  function showToast(msg) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
+  }
+
+  // Mobile nav
+  const navToggle = $("navToggle");
+  const navLinks = $("navLinks");
+  if (navToggle && navLinks) {
+    const setOpen = open => {
+      navLinks.classList.toggle("open", open);
+      navToggle.setAttribute("aria-expanded", String(open));
+      navToggle.innerHTML = open ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
+    };
+    navToggle.addEventListener("click", () => setOpen(!navLinks.classList.contains("open")));
+    navLinks.addEventListener("click", e => { if (e.target.closest("a")) setOpen(false); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+  }
+
+  // Navbar shadow on scroll
+  const navbar = $("navbar");
+  const onScroll = () => navbar && navbar.classList.toggle("scrolled", window.scrollY > 10);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 
   // Adapt install command to current domain if hosted on Vercel or custom domain
-  if (installCmd && window.location.protocol.startsWith("http") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("127.0.0.1")) {
-    installCmd.textContent = `irm "${window.location.origin}/install-plugin.ps1" | iex`;
+  const installCmdText = $("installCommandText");
+  const host = window.location.hostname;
+  if (installCmdText && window.location.protocol.startsWith("http") && host && !["localhost", "127.0.0.1"].includes(host)) {
+    installCmdText.textContent = `irm "${window.location.origin}/install-plugin.ps1" | iex`;
   }
 
-  const checkUpdateBtn = document.getElementById("checkUpdateBtn");
-  const updateSpinner = document.getElementById("updateSpinner");
-  const latestVerDisplay = document.getElementById("latestVerDisplay");
-  const statusBadge = document.getElementById("statusBadge");
-  const changelogCard = document.getElementById("changelogCard");
-  const changelogBody = document.getElementById("changelogBody");
-  const releaseDownloadLink = document.getElementById("releaseDownloadLink");
-  const manualDownloadBtn = document.getElementById("manualDownloadBtn");
+  // Copy command to clipboard (with fallback for non-secure contexts / file://)
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (_) { ok = false; }
+    ta.remove();
+    return ok ? Promise.resolve() : Promise.reject(new Error("execCommand falhou"));
+  }
 
-  // Copy command to clipboard
-  if (copyBtn && installCmd) {
-    copyBtn.addEventListener("click", () => {
-      const textToCopy = installCmd.textContent.trim();
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        copyBtn.classList.add("copied");
-        copyIcon.className = "fa-solid fa-check";
-        copyText.textContent = "Copiado!";
+  document.querySelectorAll("[data-copy]").forEach(btn => {
+    const source = $(btn.dataset.copy);
+    if (!source) return;
+    const icon = btn.querySelector("i");
+    const label = btn.querySelector("span");
+    btn.addEventListener("click", () => {
+      const textToCopy = source.textContent.trim();
+      const copy = navigator.clipboard && window.isSecureContext
+        ? navigator.clipboard.writeText(textToCopy).catch(() => fallbackCopy(textToCopy))
+        : fallbackCopy(textToCopy);
+
+      copy.then(() => {
+        btn.classList.add("copied");
+        if (icon) icon.className = "fa-solid fa-check";
+        if (label) label.textContent = "Copiado!";
+        showToast("Comando copiado! Cole no PowerShell e pressione Enter.");
         setTimeout(() => {
-          copyBtn.classList.remove("copied");
-          copyIcon.className = "fa-regular fa-clone";
-          copyText.textContent = "Copiar";
+          btn.classList.remove("copied");
+          if (icon) icon.className = "fa-regular fa-clone";
+          if (label) label.textContent = "Copiar";
         }, 2500);
       }).catch(err => {
         console.error("Falha ao copiar:", err);
+        showToast("Não foi possível copiar. Selecione o comando manualmente.");
       });
     });
+  });
+
+  // Update checker
+  const checkUpdateBtn = $("checkUpdateBtn");
+  const updateSpinner = $("updateSpinner");
+  const latestVerDisplay = $("latestVerDisplay");
+  const statusBadge = $("statusBadge");
+  const changelogCard = $("changelogCard");
+  const changelogBody = $("changelogBody");
+  const changelogDate = $("changelogDate");
+  const releaseDownloadLink = $("releaseDownloadLink");
+  const manualDownloadBtn = $("manualDownloadBtn");
+
+  function setStatus(kind, icon, text) {
+    if (!statusBadge) return;
+    statusBadge.className = "status" + (kind ? " " + kind : "");
+    statusBadge.innerHTML = `<i class="${icon}"></i> `;
+    statusBadge.appendChild(document.createTextNode(text));
   }
 
-  // Copy uninstall command to clipboard
-  const copyUninstallBtn = document.getElementById("copyUninstallBtn");
-  const copyUninstallIcon = document.getElementById("copyUninstallIcon");
-  const copyUninstallText = document.getElementById("copyUninstallText");
-  const uninstallCmd = document.getElementById("uninstallCommand");
+  function readCache() {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const { t, data } = JSON.parse(raw);
+      return Date.now() - t < CACHE_TTL ? data : null;
+    } catch (_) { return null; }
+  }
 
-  if (copyUninstallBtn && uninstallCmd) {
-    copyUninstallBtn.addEventListener("click", () => {
-      const textToCopy = uninstallCmd.textContent.trim();
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        copyUninstallBtn.classList.add("copied");
-        copyUninstallIcon.className = "fa-solid fa-check";
-        copyUninstallText.textContent = "Copiado!";
-        setTimeout(() => {
-          copyUninstallBtn.classList.remove("copied");
-          copyUninstallIcon.className = "fa-regular fa-clone";
-          copyUninstallText.textContent = "Copiar";
-        }, 2500);
-      }).catch(err => {
-        console.error("Falha ao copiar:", err);
-      });
+  function writeCache(data) {
+    try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data })); } catch (_) {}
+  }
+
+  async function fetchLatestRelease(force) {
+    if (!force) {
+      const cached = readCache();
+      if (cached) return cached;
+    }
+    const resp = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+      headers: { "Accept": "application/vnd.github+json" }
     });
+    if (resp.status === 404) {
+      const data = { none: true };
+      writeCache(data);
+      return data;
+    }
+    if (resp.status === 403 || resp.status === 429) throw new Error("rate-limit");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const r = await resp.json();
+    const zipAsset = (r.assets || []).find(a => a.name.toLowerCase().endsWith(".zip"));
+    const data = {
+      tag: r.tag_name || r.name || currentVersion,
+      body: r.body || "",
+      date: r.published_at || null,
+      htmlUrl: r.html_url,
+      zipUrl: zipAsset ? zipAsset.browser_download_url : null
+    };
+    writeCache(data);
+    return data;
   }
 
-  // Check updates via GitHub API
-  async function checkUpdates() {
-    if (updateSpinner) updateSpinner.classList.add("fa-spin");
-    if (latestVerDisplay) latestVerDisplay.textContent = "Buscando...";
-    if (statusBadge) {
-      statusBadge.className = "status-badge";
-      statusBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando no GitHub...';
+  function renderRelease(rel) {
+    changelogCard.hidden = false;
+
+    if (rel.none) {
+      latestVerDisplay.textContent = currentVersion;
+      setStatus("up-to-date", "fa-solid fa-circle-check", `Versão mais recente (${currentVersion})`);
+      changelogDate.textContent = "";
+      changelogBody.textContent = `Nenhuma release publicada ainda. O ManifestAdvTools ${currentVersion} é a versão atual.`;
+      releaseDownloadLink.href = repoUrl;
+      releaseDownloadLink.innerHTML = '<i class="fa-brands fa-github"></i> Ver Repositório no GitHub';
+      return;
     }
 
-    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`;
+    latestVerDisplay.textContent = rel.tag;
+    if (compareVersions(rel.tag, currentVersion) > 0) {
+      setStatus("update-avail", "fa-solid fa-arrow-up", `Atualização disponível (${rel.tag})`);
+    } else {
+      setStatus("up-to-date", "fa-solid fa-circle-check", "Você está na versão mais recente");
+    }
+
+    changelogDate.textContent = rel.date
+      ? new Date(rel.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+      : "";
+    changelogBody.textContent = cleanMarkdown(rel.body) || "Nenhuma nota de atualização fornecida para este release.";
+    releaseDownloadLink.href = rel.zipUrl || rel.htmlUrl || repoUrl;
+    releaseDownloadLink.innerHTML = `<i class="fa-solid fa-download"></i> Baixar ${escapeHtml(rel.tag)}${rel.zipUrl ? " (.ZIP)" : ""}`;
+    if (rel.zipUrl && manualDownloadBtn) manualDownloadBtn.href = rel.zipUrl;
+  }
+
+  let checking = false;
+  async function checkUpdates(force = false) {
+    if (checking) return;
+    checking = true;
+    if (checkUpdateBtn) checkUpdateBtn.disabled = true;
+    if (updateSpinner) updateSpinner.classList.add("fa-spin");
+    if (latestVerDisplay) latestVerDisplay.textContent = "Buscando...";
+    setStatus("", "fa-solid fa-spinner fa-spin", "Verificando no GitHub...");
 
     try {
-      const resp = await fetch(apiUrl, {
-        headers: {
-          "Accept": "application/vnd.github.v3+json"
-        }
-      });
-
-      if (resp.status === 404) {
-        // No releases published yet
-        if (latestVerDisplay) latestVerDisplay.textContent = currentVersion;
-        if (statusBadge) {
-          statusBadge.className = "status-badge up-to-date";
-          statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Versão mais recente (v8.2.0)';
-        }
-        if (changelogCard) {
-          changelogCard.style.display = "block";
-          changelogBody.textContent = "Repositório configurado. O ManifestAdvTools v8.2.0 é a versão mais recente.";
-          releaseDownloadLink.href = `https://github.com/${repoOwner}/${repoName}`;
-          releaseDownloadLink.innerHTML = '<i class="fa-brands fa-github"></i> Ver Repositório no GitHub';
-        }
-        return;
-      }
-
-      if (!resp.ok) {
-        throw new Error(`Erro HTTP: ${resp.status}`);
-      }
-
-      const release = await resp.json();
-      const latestTag = release.tag_name || release.name || currentVersion;
-      if (latestVerDisplay) latestVerDisplay.textContent = latestTag;
-
-      // Find zip asset
-      let zipUrl = release.html_url;
-      if (release.assets && release.assets.length > 0) {
-        const zipAsset = release.assets.find(a => a.name.toLowerCase().endsWith(".zip"));
-        if (zipAsset) zipUrl = zipAsset.browser_download_url;
-      }
-
-      // Check version comparison
-      const isNewer = compareVersions(latestTag, currentVersion) > 0;
-
-      if (statusBadge) {
-        if (isNewer) {
-          statusBadge.className = "status-badge update-avail";
-          statusBadge.innerHTML = `<i class="fa-solid fa-arrow-up"></i> Atualização Disponível (${latestTag})`;
-        } else {
-          statusBadge.className = "status-badge up-to-date";
-          statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Você está na versão mais recente';
-        }
-      }
-
-      if (changelogCard) {
-        changelogCard.style.display = "block";
-        changelogBody.textContent = release.body || "Nenhuma nota de atualização fornecida para este release.";
-        releaseDownloadLink.href = zipUrl;
-        releaseDownloadLink.innerHTML = `<i class="fa-solid fa-download"></i> Baixar ${latestTag} (.ZIP)`;
-      }
-
+      renderRelease(await fetchLatestRelease(force));
     } catch (err) {
       console.error("Erro ao verificar atualizações:", err);
       if (latestVerDisplay) latestVerDisplay.textContent = "Indisponível";
-      if (statusBadge) {
-        statusBadge.className = "status-badge";
-        statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Falha ao consultar o GitHub';
-      }
+      setStatus("error", "fa-solid fa-triangle-exclamation",
+        err.message === "rate-limit"
+          ? "Limite da API do GitHub atingido. Tente novamente em alguns minutos."
+          : "Falha ao consultar o GitHub");
     } finally {
       if (updateSpinner) updateSpinner.classList.remove("fa-spin");
+      if (checkUpdateBtn) checkUpdateBtn.disabled = false;
+      checking = false;
     }
   }
 
-  // Version comparator helper (e.g. v8.1.0 vs v8.2.0)
+  // Version comparator (handles v8.1.0, 8.2, v8.2.0-beta, etc.)
   function compareVersions(v1, v2) {
-    const clean = v => v.replace(/^v/, "").split(".").map(Number);
+    const clean = v => String(v).replace(/^[^\d]*/, "").split(/[.\-+]/).map(n => parseInt(n, 10) || 0);
     const p1 = clean(v1);
     const p2 = clean(v2);
-    const len = Math.max(p1.length, p2.length);
-    for (let i = 0; i < len; i++) {
-      const num1 = p1[i] || 0;
-      const num2 = p2[i] || 0;
-      if (num1 > num2) return 1;
-      if (num1 < num2) return -1;
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const a = p1[i] || 0;
+      const b = p2[i] || 0;
+      if (a !== b) return a > b ? 1 : -1;
     }
     return 0;
   }
 
-  if (checkUpdateBtn) {
-    checkUpdateBtn.addEventListener("click", checkUpdates);
+  // Strip the noisiest markdown so release notes read well as plain text
+  function cleanMarkdown(md) {
+    return String(md)
+      .replace(/\r\n/g, "\n")
+      .replace(/^#{1,6}\s*/gm, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^\s*[-*]\s+/gm, "• ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
-  if (manualDownloadBtn) {
-    manualDownloadBtn.addEventListener("click", () => {
-      window.open(`https://github.com/${repoOwner}/${repoName}/releases/latest`, "_blank");
-    });
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  // Initial check on page load
+  if (checkUpdateBtn) checkUpdateBtn.addEventListener("click", () => checkUpdates(true));
+
+  // Reveal-on-scroll
+  const revealEls = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => io.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add("visible"));
+  }
+
+  // Initial check on page load (served from cache when fresh)
   checkUpdates();
 });
