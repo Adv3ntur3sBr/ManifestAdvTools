@@ -2000,7 +2000,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.2\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.3\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5914,7 +5914,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.2";
+      heroTitle.textContent = "ManifestAdvTools v8.4.3";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -6007,17 +6007,35 @@
       container.appendChild(aboutWrap);
     }
 
+    // Loading/error notice lives beside the tab panels. Writing it through
+    // contentWrap.innerHTML (as before) detached every panel, so the settings
+    // rendered into nodes that were no longer on screen and "Loading..." stayed.
+    const ALL_PANELS = [panelGeneral, panelApis, panelFixes, panelLuas, panelAbout];
+    function showLoadNotice(text, color) {
+      let notice = contentWrap.querySelector(".lt-settings-load-notice");
+      if (!notice) {
+        notice = document.createElement("div");
+        notice.className = "lt-settings-load-notice";
+        notice.style.cssText = "padding:20px;";
+        contentWrap.appendChild(notice);
+      }
+      notice.style.color = color;
+      notice.textContent = text;
+      ALL_PANELS.forEach(function (panel) {
+        panel.style.display = "none";
+      });
+    }
+
     function handleLoad(force) {
       setStatus(t("settings.loading", "Loading settings..."), "#c7d5e0");
       saveBtn.dataset.disabled = "1";
       saveBtn.style.opacity = "0.6";
-      contentWrap.innerHTML =
-        '<div style="padding:20px;color:#c7d5e0;">' +
-        t("common.status.loading", "Loading...") +
-        "</div>";
+      showLoadNotice(t("common.status.loading", "Loading..."), "#c7d5e0");
 
       return fetchSettingsConfig(force)
         .then(function (config) {
+          const notice = contentWrap.querySelector(".lt-settings-load-notice");
+          if (notice) notice.remove();
           state.config = {
             schemaVersion: config.schemaVersion,
             schema: Array.isArray(config.schema) ? config.schema : [],
@@ -6035,8 +6053,7 @@
             err && err.message
               ? err.message
               : t("settings.error", "Failed to load settings.");
-          contentWrap.innerHTML =
-            '<div style="padding:20px;color:#ff5c5c;">' + message + "</div>";
+          showLoadNotice(message, "#ff5c5c");
           setStatus(
             t("common.status.error", "Error") + ": " + message,
             "#ff5c5c",
