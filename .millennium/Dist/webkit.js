@@ -2000,7 +2000,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.3\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.4\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5914,7 +5914,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.3";
+      heroTitle.textContent = "ManifestAdvTools v8.4.4";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -8456,7 +8456,7 @@ function addLuaToolsButton() {
             } else if (
               (st.status === "downloading" ||
                 st.status === "processing" ||
-                st.status === "installing") &&
+                st.status === "installing" || state.status === "extracting") &&
               title
             ) {
               title.textContent = t("common.appName", "ManifestAdvTools");
@@ -8479,7 +8479,7 @@ function addLuaToolsButton() {
               if (st.status === "processing")
                 status.innerHTML =
                   gearIcon + "<span>" + lt("Processing package…") + "</span>";
-              if (st.status === "installing")
+              if (st.status === "installing" || state.status === "extracting")
                 status.innerHTML =
                   gearIcon + "<span>" + lt("Installing…") + "</span>";
               if (st.status === "checking content")

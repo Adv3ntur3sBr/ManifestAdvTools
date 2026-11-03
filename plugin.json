@@ -3,7 +3,7 @@
   "name": "ManifestAdvTools",
   "common_name": "ManifestAdvTools",
   "description": "ManifestAdvTools - Gerenciador Moderno e Avançado de Jogos e Manifestos para Steam",
-  "version": "8.4.3",
+  "version": "8.4.4",
   "backendType": "lua",
   "include": [
     "public"

@@ -1,6 +1,13 @@
 {
     "api_list": [
         {
+            "name": "Ryuu",
+            "url": "http://167.235.229.108/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
             "name": "Raian Manifests",
             "url": "https://raw.githubusercontent.com/raianffyt2222/reporaianlmm/refs/heads/main/<appid>.zip",
             "success_code": 200,
@@ -10,6 +17,13 @@
         {
             "name": "Sushi",
             "url": "https://raw.githubusercontent.com/sushi-dev55-alt/sushitools-games-repo-alt/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Sushi Main",
+            "url": "https://raw.githubusercontent.com/sushi-dev55/sushitools-games-repo/refs/heads/main/<appid>.zip",
             "success_code": 200,
             "unavailable_code": 404,
             "enabled": true
@@ -31,6 +45,83 @@
         {
             "name": "Angel Manifest",
             "url": "https://raw.githubusercontent.com/Angelpro09xd/manifestrepo/refs/heads/main/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Furcate",
+            "url": "https://furcate.eu/files/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Cysaw",
+            "url": "https://cysaw.top/uploads/<appid>.zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "PrintedWaste",
+            "url": "https://api.printedwaste.com/gfk/download/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "ManiLua",
+            "url": "https://manilua.steamtools.app/api/files/<appid>/zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "SteamTools Games",
+            "url": "https://steamtools.games/api/files/<appid>/zip",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "ManifestHub (SAC)",
+            "url": "https://codeload.github.com/SteamAutoCracks/ManifestHub/zip/refs/heads/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "ManifestHub (ST)",
+            "url": "https://codeload.github.com/steamtoolsapp/ManifestHub/zip/refs/heads/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Auiowu Manifests",
+            "url": "https://codeload.github.com/Auiowu/ManifestAutoUpdate/zip/refs/heads/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "Onekey Manifests",
+            "url": "https://codeload.github.com/Onekey-Project/Manifest-AutoUpdate/zip/refs/heads/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "isKoi Manifests",
+            "url": "https://codeload.github.com/isKoi/Manifest-AutoUpdate/zip/refs/heads/<appid>",
+            "success_code": 200,
+            "unavailable_code": 404,
+            "enabled": true
+        },
+        {
+            "name": "lls7890 Repo",
+            "url": "https://codeload.github.com/lls7890/Repository/zip/refs/heads/<appid>",
             "success_code": 200,
             "unavailable_code": 404,
             "enabled": true
