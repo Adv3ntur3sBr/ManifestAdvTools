@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setStatus(kind, icon, text) {
     if (!statusBadge) return;
-    statusBadge.className = "status-badge" + (kind ? " " + kind : "");
+    statusBadge.className = "status" + (kind ? " " + kind : "");
     statusBadge.innerHTML = `<i class="${icon}"></i> `;
     statusBadge.appendChild(document.createTextNode(text));
   }
