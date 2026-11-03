@@ -332,6 +332,15 @@ function StartAddViaLuaToolsFromUrl(apiName, appid, contentScriptQuery, url)
 end
 
 function GetIconDataUrl()
+    -- Vector icon stays sharp at every size the UI uses (header button, menus)
+    local svg_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.svg")
+    if fs.exists(svg_path) and m_utils.base64_encode then
+        local svg = m_utils.read_file(svg_path)
+        if svg then
+            return json_ok({ success = true, dataUrl = "data:image/svg+xml;base64," .. m_utils.base64_encode(svg) })
+        end
+    end
+
     local icon_path = fs.join(paths.get_plugin_dir(), "public", "manifestadvtools-icon.png")
     if not fs.exists(icon_path) then
         icon_path = fs.join(paths.get_plugin_dir(), "public", "advgametool-icon.png")

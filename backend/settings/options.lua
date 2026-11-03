@@ -27,7 +27,7 @@ options.SETTINGS_GROUPS = {
                 label = "Theme",
                 option_type = "select",
                 description = "Choose the color theme for LuaTools interface.",
-                default = "original",
+                default = "depot",
                 metadata = {dynamicChoices = "themes"}
             },
             {

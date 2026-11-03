@@ -1,0 +1,50 @@
+:root {
+    --lt-bg-primary: #0a131f;
+    --lt-bg-secondary: #0f1d2d;
+    --lt-bg-tertiary: rgba(20, 39, 57, 0.94);
+    --lt-bg-hover: rgba(32, 58, 82, 0.94);
+    --lt-bg-container: rgba(15, 29, 45, 0.72);
+    --lt-bg-container-gradient: rgba(15, 29, 45, 0.92), #0a131f;
+    --lt-accent: #ffb224;
+    --lt-accent-light: #ffc85c;
+    --lt-accent-dark: #c98a1a;
+    --lt-border: rgba(255, 178, 36, 0.3);
+    --lt-border-hover: rgba(255, 178, 36, 0.8);
+    --lt-text: #e9f0f7;
+    --lt-text-secondary: #8ba0b4;
+    --lt-gradient: linear-gradient(135deg, #9a640b 0%, #7f5207 100%);
+    --lt-gradient-light: linear-gradient(135deg, #a86f0e 0%, #8f5d09 100%);
+    --lt-shadow: rgba(255, 178, 36, 0.4);
+    --lt-shadow-hover: rgba(255, 178, 36, 0.6);
+    --lt-shadow-rgba: rgba(255, 178, 36, 0.3);
+    --lt-rgb: 255,178,36;
+}
+
+/* Select dropdown styling for depot theme */
+select {
+    background-color: rgba(20, 39, 57, 0.94) !important;
+    color: #e9f0f7 !important;
+    border: 1px solid rgba(255, 178, 36, 0.3) !important;
+    border-radius: 6px;
+}
+
+select option {
+    background-color: #0a131f;
+    color: #e9f0f7;
+}
+
+select option:checked {
+    background: linear-gradient(#ffb224, #ffb224);
+    background-color: #ffb224 !important;
+    color: #0a131f !important;
+}
+
+select:hover {
+    border-color: rgba(255, 178, 36, 0.8) !important;
+}
+
+select:focus {
+    outline: none;
+    border-color: #ffb224 !important;
+    box-shadow: 0 0 0 2px rgba(255, 178, 36, 0.3);
+}

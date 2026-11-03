@@ -1,5 +1,26 @@
 [
   {
+    "value": "depot",
+    "name": "Depot",
+    "bgPrimary": "#0a131f",
+    "bgSecondary": "#0f1d2d",
+    "bgTertiary": "rgba(20, 39, 57, 0.94)",
+    "bgHover": "rgba(32, 58, 82, 0.94)",
+    "bgContainer": "rgba(15, 29, 45, 0.72)",
+    "bgContainerGradient": "rgba(15, 29, 45, 0.92), #0a131f",
+    "accent": "#ffb224",
+    "accentLight": "#ffc85c",
+    "accentDark": "#c98a1a",
+    "border": "rgba(255,178,36,0.3)",
+    "borderHover": "rgba(255,178,36,0.8)",
+    "text": "#e9f0f7",
+    "textSecondary": "#8ba0b4",
+    "gradient": "linear-gradient(135deg, #9a640b 0%, #7f5207 100%)",
+    "gradientLight": "linear-gradient(135deg, #a86f0e 0%, #8f5d09 100%)",
+    "shadow": "rgba(255,178,36,0.4)",
+    "shadowHover": "rgba(255,178,36,0.6)"
+  },
+  {
     "value": "original",
     "name": "Original",
     "bgPrimary": "#1b2838",

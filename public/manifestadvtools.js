@@ -788,6 +788,26 @@
 
   // Theme definitions (pulled from themes.json; inline only used as fallback)
   const DEFAULT_THEMES = {
+    depot: {
+      name: "Depot",
+      bgPrimary: "#0a131f",
+      bgSecondary: "#0f1d2d",
+      bgTertiary: "rgba(20, 39, 57, 0.94)",
+      bgHover: "rgba(32, 58, 82, 0.94)",
+      bgContainer: "rgba(15, 29, 45, 0.72)",
+      bgContainerGradient: "rgba(15, 29, 45, 0.92), #0a131f",
+      accent: "#ffb224",
+      accentLight: "#ffc85c",
+      accentDark: "#c98a1a",
+      border: "rgba(255,178,36,0.3)",
+      borderHover: "rgba(255,178,36,0.8)",
+      text: "#e9f0f7",
+      textSecondary: "#8ba0b4",
+      gradient: "linear-gradient(135deg, #9a640b 0%, #7f5207 100%)",
+      gradientLight: "linear-gradient(135deg, #a86f0e 0%, #8f5d09 100%)",
+      shadow: "rgba(255,178,36,0.4)",
+      shadowHover: "rgba(255,178,36,0.6)",
+    },
     original: {
       name: "ADV Tools",
       bgPrimary: "#0d0f1a",
@@ -919,9 +939,9 @@
     try {
       const settings = window.__LuaToolsSettings || {};
       const themeKey = (settings.values || {}).general || {};
-      return themeKey.theme || "original";
+      return themeKey.theme || "depot";
     } catch (e) {
-      return "original";
+      return "depot";
     }
   }
 
@@ -1039,37 +1059,37 @@
                 box-shadow: 0 0 0 2px ${theme.shadow} !important;
             }
             .luatools-btn {
-                padding: 12px 24px;
+                padding: 11px 20px;
                 background: ${theme.bgSecondary};
-                border: 2px solid ${theme.border.replace("0.3", "0.5")};
-                border-radius: 12px;
+                border: 1px solid ${theme.border.replace("0.3", "0.5")};
+                border-radius: 8px;
                 color: ${theme.text};
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: 600;
                 text-decoration: none;
-                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
                 cursor: pointer;
-                box-shadow: 0 2px 8px ${theme.shadow};
-                letter-spacing: 0.3px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                letter-spacing: 0.2px;
             }
             .luatools-btn:hover:not([data-disabled="1"]) {
                 background: ${theme.bgHover};
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px ${theme.shadowHover};
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
                 border-color: ${theme.borderHover};
             }
             .luatools-btn.primary {
                 background: ${theme.gradient};
-                border-color: ${theme.borderHover.replace("0.8", "0.8")};
+                border-color: ${theme.borderHover};
                 color: ${theme.text};
                 font-weight: 700;
-                box-shadow: 0 4px 15px ${theme.shadow}, inset 0 1px 0 rgba(255,255,255,0.3);
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+                text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
             }
             .luatools-btn.primary:hover:not([data-disabled="1"]) {
                 background: ${theme.gradientLight};
-                transform: translateY(-3px) scale(1.03);
-                box-shadow: 0 8px 25px rgba(26, 159, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px ${theme.shadow}, inset 0 1px 0 rgba(255, 255, 255, 0.2);
             }
 
             /* Modern Toggle Switch */
@@ -1106,7 +1126,7 @@
                 right: 0;
                 bottom: 0;
                 background-color: rgba(255, 255, 255, 0.1);
-                transition: .4s;
+                transition: .2s;
                 border-radius: 34px;
                 border: 1px solid rgba(255, 255, 255, 0.2);
             }
@@ -1118,19 +1138,19 @@
                 left: 3px;
                 bottom: 3px;
                 background-color: #ffffff;
-                transition: .4s;
+                transition: .2s;
                 border-radius: 50%;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
             input:checked + .luatools-slider {
-                background-color: #1a9fff;
-                border-color: #1a9fff;
+                background-color: ${theme.accent};
+                border-color: ${theme.accent};
             }
             input:checked + .luatools-slider:before {
                 transform: translateX(24px);
             }
             .luatools-slider:hover {
-                border-color: #1a9fff;
+                border-color: ${theme.accent};
             }
 
             @keyframes fadeIn {
@@ -1162,22 +1182,20 @@
                 align-items: center;
                 justify-content: center;
                 align-self: center;
-                width: 36px;
-                height: 36px;
+                width: 34px;
+                height: 34px;
                 padding: 0;
-                border: 2px solid ${theme.border.replace("0.3", "0.5")};
-                border-radius: 4px;
-                background: ${theme.bgSecondary};
+                border: 1px solid transparent;
+                border-radius: 8px;
+                background: transparent;
                 color: ${theme.text};
                 cursor: pointer;
-                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                box-shadow: 0 2px 8px ${theme.shadow};
+                transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
                 margin-left: 12px;
             }
             button.luatools-header-button:hover {
                 background: ${theme.bgHover};
                 transform: translateY(-1px);
-                box-shadow: 0 4px 12px ${theme.shadowHover};
                 border-color: ${theme.borderHover};
             }
             button.luatools-header-button:focus-visible {
@@ -1186,8 +1204,8 @@
             }
             button.luatools-header-button img,
             button.luatools-header-button svg {
-                height: 16px;
-                width: 16px;
+                height: 28px;
+                width: 28px;
             }
         `;
   }
@@ -1231,7 +1249,7 @@
       }
 
       advStyle.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
         :root {
           --lt-accent: ${colors.accent};
@@ -1255,9 +1273,9 @@
         .luatools-custom-api-overlay > div, .luatools-alert-overlay > div,
         .luatools-confirm-overlay > div {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Motiva Sans', sans-serif !important;
-          border-radius: 16px !important;
-          border: 1px solid rgba(${colors.rgbString}, 0.28) !important;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.65), 0 0 28px rgba(${colors.rgbString}, 0.18) !important;
+          border-radius: 12px !important;
+          border: 1px solid rgba(${colors.rgbString}, 0.2) !important;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.6) !important;
           background: linear-gradient(145deg, ${theme.bgPrimary} 0%, ${theme.bgSecondary} 100%) !important;
           color: ${colors.text} !important;
         }
@@ -1266,13 +1284,13 @@
         .luatools-settings-overlay .luatools-modal-title,
         .luatools-overlay .luatools-modal-title,
         .luatools-header-title {
-          background: ${colors.gradientLight} !important;
-          -webkit-background-clip: text !important;
-          -webkit-text-fill-color: transparent !important;
-          background-clip: text !important;
+          background: none !important;
+          -webkit-text-fill-color: ${colors.text} !important;
+          color: ${colors.text} !important;
+          font-family: 'Chakra Petch', 'Inter', 'Motiva Sans', sans-serif !important;
           font-weight: 700 !important;
-          font-size: 18px !important;
-          letter-spacing: 0.3px !important;
+          font-size: 19px !important;
+          letter-spacing: 0 !important;
         }
 
         /* Glowing accent buttons */
@@ -1280,7 +1298,7 @@
         button.luatools-button[style*="background"] {
           background: ${colors.gradient} !important;
           border: 1px solid rgba(${colors.rgbString}, 0.45) !important;
-          box-shadow: 0 4px 14px rgba(${colors.rgbString}, 0.35), 0 2px 6px rgba(0,0,0,0.4) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.35) !important;
           transition: all 0.2s ease !important;
           border-radius: 8px !important;
           font-weight: 600 !important;
@@ -1288,13 +1306,13 @@
           color: #ffffff !important;
         }
         .luatools-button-primary:hover, .luatools-btn-primary:hover {
-          box-shadow: 0 6px 22px rgba(${colors.rgbString}, 0.55), 0 4px 12px rgba(0,0,0,0.5) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 6px 16px rgba(0,0,0,0.45) !important;
           transform: translateY(-1px) !important;
         }
 
         /* ADV Tools logo header in the main menu */
         .luatools-menu-title-icon, .luatools-title-icon {
-          filter: drop-shadow(0 0 8px rgba(${colors.rgbString}, 0.6)) !important;
+          filter: none !important;
         }
 
         /* Glowing overlay backdrops */
@@ -1362,14 +1380,14 @@
         .luatools-store-btn, [id*="luatools-header-btn"], [id*="luatools-store"], .luatools-bundle-btn {
           background: ${colors.gradient} !important;
           border: 1px solid rgba(${colors.rgbString}, 0.5) !important;
-          box-shadow: 0 0 12px rgba(${colors.rgbString}, 0.35) !important;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.35) !important;
           border-radius: 6px !important;
           font-weight: 600 !important;
           transition: all 0.2s ease !important;
           color: #ffffff !important;
         }
         .luatools-store-btn:hover, [id*="luatools-header-btn"]:hover, [id*="luatools-store"]:hover, .luatools-bundle-btn:hover {
-          box-shadow: 0 0 20px rgba(${colors.rgbString}, 0.6) !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.45) !important;
           transform: translateY(-1px) !important;
         }
 
@@ -1428,6 +1446,33 @@
           border-radius: 10px !important;
           font-size: 11px !important;
           font-weight: 700 !important;
+        }
+
+        /* One display face for titles, visible keyboard focus, calm motion */
+        .luatools-overlay h1, .luatools-overlay h2, .luatools-overlay h3,
+        .luatools-settings-overlay h1, .luatools-settings-overlay h2, .luatools-settings-overlay h3,
+        .luatools-settings-manager-overlay h2, .luatools-settings-manager-overlay h3 {
+          font-family: 'Chakra Petch', 'Inter', 'Motiva Sans', sans-serif !important;
+          letter-spacing: 0 !important;
+        }
+        .luatools-btn:focus-visible, .luatools-tab-btn:focus-visible,
+        .luatools-overlay button:focus-visible, .luatools-settings-overlay button:focus-visible {
+          outline: 2px solid ${colors.accent} !important;
+          outline-offset: 2px !important;
+        }
+        /* The settings search sits inside its own bordered wrapper */
+        #luatools-settings-search {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [class*="luatools-"], [class*="luatools-"] * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
         }
       `;
     } catch (_adv) {}
@@ -1702,7 +1747,7 @@
         title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:22px;color:${colors.text};font-weight:600;`;
         const titleIcon = document.createElement("img");
         titleIcon.style.cssText = "width:24px;height:24px;border-radius:4px;";
-        titleIcon.alt = "AdvgameTool";
+        titleIcon.alt = "ManifestAdvTools";
         try {
           Millennium.callServerMethod("ManifestAdvTools", "GetIconDataUrl", {
             contentScriptQuery: "",
@@ -1724,7 +1769,8 @@
           this.style.display = "none";
         };
         const titleText = document.createElement("span");
-        titleText.textContent = t("menu.title", "AdvgameTool");
+        titleText.textContent = t("menu.title", "ManifestAdvTools");
+        titleText.className = "luatools-header-title";
         title.appendChild(titleIcon);
         title.appendChild(titleText);
 
@@ -1861,7 +1907,7 @@
         removeBtn.style.cssText = `display:none;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.3);border-radius:10px;color:#ff6b6b;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s ease;cursor:pointer;text-align:center;`;
         removeBtn.innerHTML =
           '<i class="fa-solid fa-trash-can" style="font-size:14px;"></i><span>' +
-          t("menu.removeLuaTools", "Remover via AdvgameTool") +
+          t("menu.removeLuaTools", "Remover via ManifestAdvTools") +
           "</span>";
         removeBtn.onmouseover = function () {
           this.style.background = "rgba(255,80,80,0.18)";
@@ -1946,7 +1992,7 @@
                     payload && payload.message
                       ? String(payload.message)
                       : lt("No updates available.");
-                  ShowLuaToolsAlert("AdvgameTool", msg);
+                  ShowLuaToolsAlert("ManifestAdvTools", msg);
                 } catch (_) {}
               });
             } catch (_) {}
@@ -1954,7 +2000,7 @@
         }
 
         if (discordBtn) {
-          discordBtn.title = "Sobre o AdvgameTool";
+          discordBtn.title = "Sobre o ManifestAdvTools";
           discordBtn.innerHTML = '<i class="fa-solid fa-gamepad"></i>';
           discordBtn.addEventListener("click", function (e) {
             e.preventDefault();
@@ -1963,7 +2009,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.3.1\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -2000,7 +2046,7 @@
                       ? String(payload.error)
                       : lt("Failed to load free APIs.");
                   const text = ok ? successText : failText;
-                  ShowLuaToolsAlert("AdvgameTool", text);
+                  ShowLuaToolsAlert("ManifestAdvTools", text);
                 } catch (_) {}
               });
             } catch (_) {}
@@ -2047,7 +2093,7 @@
                   "menu.error.noAppId",
                   "Could not determine game AppID",
                 );
-                ShowLuaToolsAlert("AdvgameTool", errText);
+                ShowLuaToolsAlert("ManifestAdvTools", errText);
                 return;
               }
 
@@ -2091,7 +2137,7 @@
                     "menu.error.getPath",
                     "Error getting game path",
                   );
-                  ShowLuaToolsAlert("AdvgameTool", errorText);
+                  ShowLuaToolsAlert("ManifestAdvTools", errorText);
                 });
             } catch (err) {
               backendLog("ManifestAdvTools: Fixes Menu button error: " + err);
@@ -2147,7 +2193,7 @@
                               "menu.remove.success",
                               "LuaTools removed for this app.",
                             );
-                            ShowLuaToolsAlert("AdvgameTool", successText);
+                            ShowLuaToolsAlert("ManifestAdvTools", successText);
                           } catch (err) {
                             backendLog(
                               "ManifestAdvTools: post-delete cleanup failed: " + err,
@@ -2161,7 +2207,7 @@
                           );
                           const errMsg =
                             err && err.message ? err.message : failureText;
-                          ShowLuaToolsAlert("AdvgameTool", errMsg);
+                          ShowLuaToolsAlert("ManifestAdvTools", errMsg);
                         });
                     } catch (err) {
                       backendLog("ManifestAdvTools: doDelete failed: " + err);
@@ -2313,7 +2359,7 @@
 
   function askRestartConfirmation() {
     showLuaToolsConfirm(
-      "AdvgameTool",
+      "ManifestAdvTools",
       lt("Deseja reiniciar a Steam agora para aplicar as alterações?"),
       function () {
         try {
@@ -2591,7 +2637,7 @@
     titleIcon.className = "fa-solid fa-wrench";
     titleIcon.style.cssText = `color:${colors.accent};font-size:20px;`;
     const titleText = document.createElement("span");
-    titleText.textContent = t("fixes.title", "AdvgameTool · Menu de Correções");
+    titleText.textContent = t("fixes.title", "ManifestAdvTools · Menu de Correções");
     title.appendChild(titleIcon);
     title.appendChild(titleText);
 
@@ -3060,12 +3106,12 @@
                   errorKey.startsWith("common."))
                   ? t(errorKey)
                   : errorKey || lt("Failed to start un-fix");
-              ShowLuaToolsAlert("AdvgameTool", errorMsg);
+              ShowLuaToolsAlert("ManifestAdvTools", errorMsg);
             }
           })
           .catch(function () {
             const msg = lt("Error starting un-fix");
-            ShowLuaToolsAlert("AdvgameTool", msg);
+            ShowLuaToolsAlert("ManifestAdvTools", msg);
           });
       } catch (err) {
         backendLog("ManifestAdvTools: Un-Fix start error: " + err);
@@ -3147,12 +3193,12 @@
             payload && payload.error
               ? String(payload.error)
               : lt("Failed to check for fixes.");
-          ShowLuaToolsAlert("AdvgameTool", errText);
+          ShowLuaToolsAlert("ManifestAdvTools", errText);
         }
       })
       .catch(function () {
         const msg = lt("Error checking for fixes");
-        ShowLuaToolsAlert("AdvgameTool", msg);
+        ShowLuaToolsAlert("ManifestAdvTools", msg);
       })
       .finally(function () {
         clearInterval(progressInterval);
@@ -3177,7 +3223,7 @@
       // Check if we have the game install path
       if (!window.__LuaToolsGameInstallPath) {
         const msg = lt("Game install path not found");
-        ShowLuaToolsAlert("AdvgameTool", msg);
+        ShowLuaToolsAlert("ManifestAdvTools", msg);
         return;
       }
 
@@ -3207,18 +3253,18 @@
                   errorKey.startsWith("common."))
                   ? t(errorKey)
                   : errorKey || lt("Failed to start fix download");
-              ShowLuaToolsAlert("AdvgameTool", errorMsg);
+              ShowLuaToolsAlert("ManifestAdvTools", errorMsg);
             }
           } catch (err) {
             backendLog("ManifestAdvTools: ApplyGameFix response error: " + err);
             const msg = lt("Error applying fix");
-            ShowLuaToolsAlert("AdvgameTool", msg);
+            ShowLuaToolsAlert("ManifestAdvTools", msg);
           }
         })
         .catch(function (err) {
           backendLog("ManifestAdvTools: ApplyGameFix error: " + err);
           const msg = lt("Error applying fix");
-          ShowLuaToolsAlert("AdvgameTool", msg);
+          ShowLuaToolsAlert("ManifestAdvTools", msg);
         });
     } catch (err) {
       backendLog("ManifestAdvTools: applyFix error: " + err);
@@ -3301,7 +3347,7 @@
               msgEl2.textContent = msgEl2.dataset.last;
             backendLog("ManifestAdvTools: CancelApplyFix response error: " + err);
             const msg = lt("Failed to cancel fix download");
-            ShowLuaToolsAlert("AdvgameTool", msg);
+            ShowLuaToolsAlert("ManifestAdvTools", msg);
           }
         })
         .catch(function (err) {
@@ -3313,7 +3359,7 @@
             msgEl2.textContent = msgEl2.dataset.last;
           backendLog("ManifestAdvTools: CancelApplyFix error: " + err);
           const msg = lt("Failed to cancel fix download");
-          ShowLuaToolsAlert("AdvgameTool", msg);
+          ShowLuaToolsAlert("ManifestAdvTools", msg);
         });
     };
     btnRow.appendChild(cancelBtn);
@@ -3706,7 +3752,7 @@
     const title = document.createElement("div");
     const settingsTitleColors = getThemeColors();
     title.style.cssText = `font-size:22px;color:${settingsTitleColors.text};font-weight:600;display:flex;align-items:center;gap:10px;`;
-    title.innerHTML = `<i class="fa-solid fa-gamepad" style="color:${settingsTitleColors.accent};font-size:22px;"></i><span>${t("settings.title", "AdvgameTool · Configurações")}</span>`;
+    title.innerHTML = `<i class="fa-solid fa-gamepad" style="color:${settingsTitleColors.accent};font-size:22px;"></i><span>${t("settings.title", "ManifestAdvTools · Configurações")}</span>`;
 
     const iconButtons = document.createElement("div");
     iconButtons.style.cssText = "display:flex;gap:12px;";
@@ -3960,7 +4006,7 @@
       } else if (tabId === "luas") {
         searchInput.placeholder = t("settings.search.luas", "Pesquisar jogos instalados...");
       } else {
-        searchInput.placeholder = t("settings.search.about", "Pesquisar recursos do AdvgameTool...");
+        searchInput.placeholder = t("settings.search.about", "Pesquisar recursos do ManifestAdvTools...");
       }
 
       applySearchFilter();
@@ -4123,7 +4169,8 @@
     modal.appendChild(scrollbarStyle);
 
     function applyStaticTranslations() {
-      title.textContent = t("settings.title", "ADV Tools · Settings");
+      title.textContent = t("settings.title", "ManifestAdvTools — Configurações");
+      title.classList.add("luatools-header-title");
       refreshBtn.title = t("settings.refresh", "Refresh");
       saveBtn.title = t("settings.save", "Save Settings");
       backBtn.title = t("Back", "Back");
@@ -5623,7 +5670,7 @@
       const loadingLuaColors = getThemeColors();
       container.innerHTML =
         `<div style="padding:16px;text-align:center;color:${loadingLuaColors.textSecondary};font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>` +
-        t("settings.installedLua.loading", "Buscando jogos adicionados via AdvgameTool...") +
+        t("settings.installedLua.loading", "Buscando jogos adicionados via ManifestAdvTools...") +
         "</div>";
 
       Millennium.callServerMethod("ManifestAdvTools", "GetInstalledLuaScripts", {
@@ -5778,10 +5825,10 @@
         if (luaDeleteBtn.dataset.busy === "1") return;
 
         showLuaToolsConfirm(
-          script.gameName || "AdvgameTool",
+          script.gameName || "ManifestAdvTools",
           t(
             "settings.installedLua.deleteConfirm",
-            "Remover via AdvgameTool para este jogo?",
+            "Remover via ManifestAdvTools para este jogo?",
           ),
           function () {
             // User confirmed
@@ -5799,7 +5846,7 @@
                   typeof res === "string" ? JSON.parse(res) : res;
                 if (!response || !response.success) {
                   ShowLuaToolsAlert(
-                    "AdvgameTool",
+                    "ManifestAdvTools",
                     t(
                       "settings.installedLua.deleteError",
                       "Falha ao remover o manifesto do jogo.",
@@ -5826,7 +5873,7 @@
               })
               .catch(function (err) {
                 ShowLuaToolsAlert(
-                  "AdvgameTool",
+                  "ManifestAdvTools",
                   t(
                     "settings.installedLua.deleteError",
                     "Falha ao remover o manifesto do jogo.",
@@ -5876,7 +5923,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.3.1";
+      heroTitle.textContent = "ManifestAdvTools v8.4.0";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -5940,14 +5987,14 @@
       actGrid.appendChild(createActionButton("Buscar Atualizações", "fa-cloud-arrow-down", function() {
         Millennium.callServerMethod("ManifestAdvTools", "CheckForUpdatesNow", {}).then(function(res) {
           const p = typeof res === "string" ? JSON.parse(res) : res;
-          ShowLuaToolsAlert("AdvgameTool", p && p.message ? p.message : "Nenhuma atualização disponível.");
+          ShowLuaToolsAlert("ManifestAdvTools", p && p.message ? p.message : "Nenhuma atualização disponível.");
         });
       }));
 
       actGrid.appendChild(createActionButton("Sincronizar APIs", "fa-server", function() {
         Millennium.callServerMethod("ManifestAdvTools", "FetchFreeApisNow", {}).then(function(res) {
           const p = typeof res === "string" ? JSON.parse(res) : res;
-          ShowLuaToolsAlert("AdvgameTool", p && p.success ? `APIs gratuitas carregadas: ${p.count}` : "Falha ao carregar APIs.");
+          ShowLuaToolsAlert("ManifestAdvTools", p && p.success ? `APIs gratuitas carregadas: ${p.count}` : "Falha ao carregar APIs.");
         });
       }));
 
@@ -6791,7 +6838,7 @@
       // Update Add via ADV Tools button
       const luatoolsBtn = document.querySelector(".luatools-button");
       if (luatoolsBtn) {
-        const addViaText = lt("⚡ Adicionar (AdvgameTool)");
+        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
         luatoolsBtn.title = addViaText;
         luatoolsBtn.setAttribute("data-tooltip-text", addViaText);
         const span = luatoolsBtn.querySelector("span");
@@ -6890,7 +6937,7 @@
     var headerText = document.createElement("div");
     var headerTitle = document.createElement("div");
     headerTitle.style.cssText = "font-size:17px;font-weight:700;color:" + theme.text + ";";
-    headerTitle.textContent = "AdvgameTool Bundle";
+    headerTitle.textContent = "ManifestAdvTools Bundle";
     var headerSub = document.createElement("div");
     headerSub.style.cssText = "font-size:12px;color:" + theme.textSecondary + ";margin-top:3px;";
     headerSub.textContent = lt("Downloading Manifest + OnlineFix", "Downloading Manifest + OnlineFix");
@@ -7164,8 +7211,8 @@ function addLuaToolsButton() {
       headerBtn.setAttribute("data-tooltip-text", "LuaTools Settings");
 
       const img = document.createElement("img");
-      img.style.height = "18px";
-      img.style.width = "18px";
+      img.style.height = "28px";
+      img.style.width = "28px";
       img.style.verticalAlign = "middle";
 
       img.onerror = function () {
@@ -7308,7 +7355,7 @@ function addLuaToolsButton() {
             "btnv6_blue_hoverfade btn_medium luatools-button";
         }
         const span = document.createElement("span");
-        const addViaText = lt("⚡ Adicionar (AdvgameTool)");
+        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
         span.textContent = addViaText;
         luatoolsButton.appendChild(span);
         // Tooltip/title
@@ -7346,7 +7393,7 @@ function addLuaToolsButton() {
         ].join("");
         const bundleSpan = document.createElement("span");
         bundleSpan.textContent = "🎮 Jogo + OnlineFix";
-        bundleBtn.title = "AdvgameTool - Baixar Manifesto + OnlineFix";
+        bundleBtn.title = "ManifestAdvTools - Baixar Manifesto + OnlineFix";
         bundleBtn.setAttribute("data-tooltip-text", "Download Manifest + OnlineFix Bundle");
         bundleBtn.appendChild(bundleSpan);
         try {
@@ -7748,7 +7795,7 @@ function addLuaToolsButton() {
                 askRestartConfirmation();
               } else {
                 // For non-update messages, use regular alert
-                ShowLuaToolsAlert("AdvgameTool", msg);
+                ShowLuaToolsAlert("ManifestAdvTools", msg);
               }
             }
           } catch (_) {}
@@ -8825,7 +8872,7 @@ function addLuaToolsButton() {
     const title = document.createElement("div");
     const loadedAppsTitleColors = getThemeColors();
     title.style.cssText = `font-size:22px;color:${loadedAppsTitleColors.text};margin-bottom:20px;font-weight:700;background:${loadedAppsTitleColors.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;`;
-    title.textContent = t("common.addedGames", "AdvgameTool · Jogos Adicionados");
+    title.textContent = t("common.addedGames", "ManifestAdvTools · Jogos Adicionados");
     const body = document.createElement("div");
     const loadedAppsBodyColors = getThemeColors();
     body.style.cssText = `font-size:14px;line-height:1.8;margin-bottom:16px;max-height:320px;overflow:auto;padding:16px;border:1px solid ${loadedAppsBodyColors.border};border-radius:12px;background:${loadedAppsBodyColors.bgContainer};`;

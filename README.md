@@ -1,4 +1,6 @@
-# ⚡ ManifestAdvTools
+<p align="center"><img src="public/manifestadvtools-logo.svg" alt="ManifestAdvTools" width="420"></p>
+
+# ManifestAdvTools
 
 **ManifestAdvTools** é um gerenciador moderno, ágil e visualmente aprimorado de manifestos, jogos e OnlineFixes para o cliente **Steam**, funcionando nativamente através do framework **[Millennium](https://steambrew.app/)**.
 
