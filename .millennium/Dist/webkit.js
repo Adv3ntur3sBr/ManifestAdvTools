@@ -1377,18 +1377,12 @@
         }
 
         /* "Add via ADV Tools" button in Steam store page */
-        .luatools-store-btn, [id*="luatools-header-btn"], [id*="luatools-store"], .luatools-bundle-btn {
-          background: ${colors.gradient} !important;
-          border: 1px solid rgba(${colors.rgbString}, 0.5) !important;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.35) !important;
-          border-radius: 6px !important;
-          font-weight: 600 !important;
-          transition: all 0.2s ease !important;
-          color: #ffffff !important;
-        }
-        .luatools-store-btn:hover, [id*="luatools-header-btn"]:hover, [id*="luatools-store"]:hover, .luatools-bundle-btn:hover {
-          box-shadow: 0 4px 12px rgba(0,0,0,0.45) !important;
-          transform: translateY(-1px) !important;
+        /* Store page buttons keep Steam's native button look (they sit next to
+           "Central da Comunidade"); only a small theme-coloured icon marks them */
+        .lt-store-ico {
+          margin-right: 7px;
+          font-size: 0.9em;
+          color: ${colors.accent};
         }
 
         /* ADV Tools badge / tag in overlays */
@@ -1738,10 +1732,10 @@
 
         const modal = document.createElement("div");
         const colors = getThemeColors();
-        modal.style.cssText = `position:relative;background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:460px;padding:20px 24px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
+        modal.style.cssText = `position:relative;background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.borderRgba};border-radius:12px;width:420px;max-width:calc(100vw - 32px);padding:18px 20px 20px;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:slideUp 0.12s ease-out;`;
 
         const header = document.createElement("div");
-        header.style.cssText = `display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid ${colors.borderRgba};`;
+        header.style.cssText = `display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid ${colors.borderRgba};`;
 
         const title = document.createElement("div");
         title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:22px;color:${colors.text};font-weight:600;`;
@@ -1775,27 +1769,24 @@
         title.appendChild(titleText);
 
         const iconButtons = document.createElement("div");
-        iconButtons.style.cssText = "display:flex;gap:12px;";
+        iconButtons.style.cssText = "display:flex;gap:4px;";
 
         function createIconButton(id, iconClass, titleKey, titleFallback) {
           const btn = document.createElement("a");
           btn.id = id;
           btn.href = "#";
           const btnColors = getThemeColors();
-          btn.style.cssText = `display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(${btnColors.rgbString},0.1);border:1px solid ${btnColors.borderRgba};border-radius:10px;color:${btnColors.accent};font-size:18px;text-decoration:none;transition:all 0.3s ease;cursor:pointer;`;
+          btn.style.cssText = `display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:transparent;border:1px solid transparent;border-radius:8px;color:${btnColors.textSecondary};font-size:15px;text-decoration:none;transition:background 0.15s ease, color 0.15s ease;cursor:pointer;`;
           btn.innerHTML = '<i class="fa-solid ' + iconClass + '"></i>';
           btn.title = t(titleKey, titleFallback);
+          btn.setAttribute("aria-label", btn.title);
           btn.onmouseover = function () {
-            this.style.background = `rgba(${btnColors.rgbString},0.25)`;
-            this.style.transform = "translateY(-2px) scale(1.05)";
-            this.style.boxShadow = `0 8px 16px ${btnColors.shadowRgba}`;
-            this.style.borderColor = btnColors.accent;
+            this.style.background = `rgba(${btnColors.rgbString},0.12)`;
+            this.style.color = btnColors.accent;
           };
           btn.onmouseout = function () {
-            this.style.background = `rgba(${btnColors.rgbString},0.1)`;
-            this.style.transform = "translateY(0) scale(1)";
-            this.style.boxShadow = "none";
-            this.style.borderColor = btnColors.borderRgba;
+            this.style.background = "transparent";
+            this.style.color = btnColors.textSecondary;
           };
           iconButtons.appendChild(btn);
           return btn;
@@ -1821,43 +1812,42 @@
 
         const container = document.createElement("div");
         container.style.cssText =
-          "margin-top:16px;display:flex;flex-direction:column;gap:12px;align-items:stretch;";
+          "margin-top:4px;display:flex;flex-direction:column;gap:10px;align-items:stretch;";
+
+        // One line saying what each action does, so nothing has to be guessed
+        const ACTION_HINTS = {
+          "lt-settings-check": "Baixa e instala a versão mais nova do plugin",
+          "lt-settings-fetch-apis": "Atualiza a lista de fontes do plugin",
+          "lt-settings-restart-steam": "Fecha e abre a Steam para aplicar mudanças",
+          "lt-settings-fixes-menu": "Correções disponíveis para este jogo",
+        };
 
         function createCardButton(id, key, fallback, iconClass) {
           const btn = document.createElement("a");
           btn.id = id;
           btn.href = "#";
-          const btnColors = getThemeColors();
-          btn.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(${btnColors.rgbString},0.06);border:1px solid ${btnColors.borderRgba};border-radius:12px;color:${btnColors.text};font-size:12px;font-weight:600;text-decoration:none;transition:all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);cursor:pointer;text-align:center;padding:16px 10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);min-width:0;`;
-          const iconHtml = iconClass
-            ? '<i class="fa-solid ' +
-              iconClass +
-              '" style="font-size:24px;color:' +
-              btnColors.accent +
-              ';transition:transform 0.2s;"></i>'
-            : "";
-          const textSpan =
-            '<span style="text-align:center;line-height:1.3;letter-spacing:0.2px;">' +
-            t(key, fallback) +
-            "</span>";
-          btn.innerHTML = iconHtml + textSpan;
+          const c = getThemeColors();
+          btn.style.cssText = `display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:14px;padding:11px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:${c.text};text-decoration:none;cursor:pointer;transition:background 0.15s ease, border-color 0.15s ease;`;
+          const hint = ACTION_HINTS[id];
+          btn.innerHTML =
+            '<span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:rgba(' + c.rgbString + ',0.12);color:' + c.accent + ';font-size:16px;">' +
+            '<i class="fa-solid ' + iconClass + '"></i></span>' +
+            '<span style="display:flex;flex-direction:column;gap:2px;min-width:0;">' +
+            '<span style="font-size:14px;font-weight:600;line-height:1.3;">' + t(key, fallback) + '</span>' +
+            (hint ? '<span style="font-size:12px;line-height:1.35;color:' + c.textSecondary + ';">' + hint + '</span>' : '') +
+            '</span>' +
+            '<i class="fa-solid fa-chevron-right lt-row-chevron" style="font-size:12px;color:' + c.textSecondary + ';transition:transform 0.15s ease;"></i>';
           btn.onmouseover = function () {
-            const c = getThemeColors();
-            this.style.background = `rgba(${c.rgbString},0.16)`;
-            this.style.transform = "translateY(-2px)";
-            this.style.boxShadow = `0 6px 18px ${c.shadowRgba}`;
+            this.style.background = `rgba(${c.rgbString},0.07)`;
             this.style.borderColor = c.accent;
-            const ic = this.querySelector("i");
-            if (ic) ic.style.transform = "scale(1.1)";
+            const ch = this.querySelector(".lt-row-chevron");
+            if (ch) ch.style.transform = "translateX(2px)";
           };
           btn.onmouseout = function () {
-            const c = getThemeColors();
-            this.style.background = `rgba(${c.rgbString},0.06)`;
-            this.style.transform = "translateY(0)";
-            this.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-            this.style.borderColor = c.borderRgba;
-            const ic = this.querySelector("i");
-            if (ic) ic.style.transform = "scale(1)";
+            this.style.background = "rgba(255,255,255,0.02)";
+            this.style.borderColor = "rgba(255,255,255,0.07)";
+            const ch = this.querySelector(".lt-row-chevron");
+            if (ch) ch.style.transform = "none";
           };
           return btn;
         }
@@ -1921,9 +1911,7 @@
 
         // Card button grid
         const cardGrid = document.createElement("div");
-        cardGrid.style.cssText = isGamePage
-          ? "display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;"
-          : "display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;";
+        cardGrid.style.cssText = "display:flex;flex-direction:column;gap:8px;";
 
         const fixesMenuBtn = createCardButton(
           "lt-settings-fixes-menu",
@@ -2012,7 +2000,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.1\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.2\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5926,7 +5914,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.1";
+      heroTitle.textContent = "ManifestAdvTools v8.4.2";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -6826,30 +6814,37 @@
     }
   }
 
+  // Store-page buttons: small theme-coloured icon + label (no emoji, which
+  // renders differently on every PC)
+  function setStoreButtonLabel(span, iconClass, text) {
+    span.innerHTML = '<i class="fa-solid ' + iconClass + ' lt-store-ico"></i>';
+    span.appendChild(document.createTextNode(text));
+  }
+
   // Function to update button text with current translations
   function updateButtonTranslations() {
     try {
       // Update Restart Steam button
       const restartBtn = document.querySelector(".luatools-restart-button");
       if (restartBtn) {
-        const restartText = lt("🔄 Reiniciar Steam");
+        const restartText = lt("Reiniciar Steam");
         restartBtn.title = restartText;
         restartBtn.setAttribute("data-tooltip-text", restartText);
         const rspan = restartBtn.querySelector("span");
         if (rspan) {
-          rspan.textContent = restartText;
+          setStoreButtonLabel(rspan, "fa-rotate-right", restartText);
         }
       }
 
       // Update Add via ADV Tools button
-      const luatoolsBtn = document.querySelector(".luatools-button");
+      const luatoolsBtn = document.querySelector(".luatools-button:not(.luatools-bundle-btn)");
       if (luatoolsBtn) {
-        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
+        const addViaText = lt("Adicionar (ManifestAdvTools)");
         luatoolsBtn.title = addViaText;
         luatoolsBtn.setAttribute("data-tooltip-text", addViaText);
         const span = luatoolsBtn.querySelector("span");
         if (span) {
-          span.textContent = addViaText;
+          setStoreButtonLabel(span, "fa-plus", addViaText);
         }
       }
     } catch (err) {
@@ -7183,6 +7178,9 @@ function addLuaToolsButton() {
       return; // Skip this execution, too soon
     }
     lastButtonCheckTime = now;
+    try {
+      ensureFontAwesome(); // store buttons use FA icons
+    } catch (_) {}
 
     // Track current URL to detect page changes
     const currentUrl = window.location.href;
@@ -7295,11 +7293,11 @@ function addLuaToolsButton() {
               "btnv6_blue_hoverfade btn_medium luatools-restart-button";
           }
           restartBtn.href = "#";
-          const restartText = lt("🔄 Reiniciar Steam");
+          const restartText = lt("Reiniciar Steam");
           restartBtn.title = restartText;
           restartBtn.setAttribute("data-tooltip-text", restartText);
           const rspan = document.createElement("span");
-          rspan.textContent = restartText;
+          setStoreButtonLabel(rspan, "fa-rotate-right", restartText);
           restartBtn.appendChild(rspan);
 
           // Normalize margins to match native buttons
@@ -7361,8 +7359,8 @@ function addLuaToolsButton() {
             "btnv6_blue_hoverfade btn_medium luatools-button";
         }
         const span = document.createElement("span");
-        const addViaText = lt("⚡ Adicionar (ManifestAdvTools)");
-        span.textContent = addViaText;
+        const addViaText = lt("Adicionar (ManifestAdvTools)");
+        setStoreButtonLabel(span, "fa-plus", addViaText);
         luatoolsButton.appendChild(span);
         // Tooltip/title
         luatoolsButton.title = addViaText;
@@ -7391,14 +7389,9 @@ function addLuaToolsButton() {
         bundleBtn.className = (referenceBtn && referenceBtn.className
           ? referenceBtn.className + " luatools-button luatools-bundle-btn"
           : "btnv6_blue_hoverfade btn_medium luatools-button luatools-bundle-btn");
-        bundleBtn.style.cssText = [
-          "background:linear-gradient(135deg,#7c3aed 0%,#a78bfa 100%) !important;",
-          "border:1px solid rgba(167,139,250,0.5) !important;",
-          "box-shadow:0 0 10px rgba(124,58,237,0.4) !important;",
-          "margin-left:4px !important;"
-        ].join("");
+        bundleBtn.style.marginLeft = "4px";
         const bundleSpan = document.createElement("span");
-        bundleSpan.textContent = "🎮 Jogo + OnlineFix";
+        setStoreButtonLabel(bundleSpan, "fa-layer-group", "Jogo + OnlineFix");
         bundleBtn.title = "ManifestAdvTools - Baixar Manifesto + OnlineFix";
         bundleBtn.setAttribute("data-tooltip-text", "Download Manifest + OnlineFix Bundle");
         bundleBtn.appendChild(bundleSpan);
