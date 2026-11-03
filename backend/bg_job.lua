@@ -1,7 +1,7 @@
 -- bg_job.lua
 -- Background download + extract jobs (silent PowerShell on Windows, bash on Linux).
 -- Each job communicates with the Lua side through small files in temp_dl:
---   <id>_state.json  -> {"status":"downloading|extracting|extracted|failed", "error":"..."}
+--   <id>_state.json  -> {"status":"downloading|extracting|extracted|failed", "error":"...", "currentApi":"..."}
 --   <id>.pid         -> PID of the worker (used for cancellation)
 --   <id>_files.txt   -> optional list of extracted files (relative paths, one per line)
 
@@ -59,128 +59,259 @@ end
 local PS_TEMPLATE = [==[
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
-function Set-State([string]$s, [string]$e, [int]$br = 0, [int]$tb = 100) {
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+function Set-State([string]$s, [string]$e, [int]$br = 0, [int]$tb = 100, [string]$api = '') {
     $o = [ordered]@{ status = $s; bytesRead = $br; totalBytes = $tb }
+    if ($api -ne '') { $o.currentApi = $api }
     if ($e) { $o.error = $e }
     [IO.File]::WriteAllText($sf, ($o | ConvertTo-Json -Compress))
 }
-try {
-    [IO.File]::WriteAllText($pf, [string]$PID)
-    Set-State 'downloading' '' 55 100
-    if (Test-Path -LiteralPath $dp) { Remove-Item -LiteralPath $dp -Force -ErrorAction SilentlyContinue }
-    $dlOk = $false
-    if ($url -match '^https?://' -and (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
-        & curl.exe -sSL --fail --connect-timeout 15 --max-time 180 -A $ua -o $dp $url 2>$null
-        if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $dp) -and (Get-Item -LiteralPath $dp).Length -gt 0) {
-            $dlOk = $true
-        }
+
+function Invoke-RawDownload([string]$targetUrl, [string]$destFile) {
+    if (Test-Path -LiteralPath $destFile) { Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
+    $ok = $false
+    if ($targetUrl -match '^https?://' -and (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+        $oldEap = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & curl.exe -sSL --fail --connect-timeout 15 --max-time 180 -A $ua -o $destFile $targetUrl 2>$null
+            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $destFile) -and (Get-Item -LiteralPath $destFile).Length -gt 0) {
+                $ok = $true
+            }
+        } catch {}
+        $ErrorActionPreference = $oldEap
     }
-    if (-not $dlOk) {
+    if (-not $ok) {
         try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072 } catch {}
         $wc = New-Object Net.WebClient
         $wc.Headers['User-Agent'] = $ua
-        $wc.DownloadFile($url, $dp)
+        $wc.DownloadFile($targetUrl, $destFile)
     }
-    if (-not (Test-Path -LiteralPath $dp) -or (Get-Item -LiteralPath $dp).Length -eq 0) {
-        throw 'Downloaded file is empty or missing'
-    }
-    Set-State 'extracting' '' 85 100
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    if (-not (Test-Path -LiteralPath $ed)) { New-Item -ItemType Directory -Path $ed -Force | Out-Null }
-    $root = [IO.Path]::GetFullPath($ed).TrimEnd('\', '/') + '\'
-    $files = New-Object System.Collections.Generic.List[string]
-    $extOk = $false
-    try {
-        $zip = [IO.Compression.ZipFile]::OpenRead($dp)
-        try {
-            foreach ($en in $zip.Entries) {
-                $rel = $en.FullName.Replace('\', '/')
-                $target = [IO.Path]::GetFullPath([IO.Path]::Combine($root, $rel))
-                if (-not $target.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) { continue }
-                if ($rel.EndsWith('/')) { [IO.Directory]::CreateDirectory($target) | Out-Null; continue }
-                [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
-                [IO.Compression.ZipFileExtensions]::ExtractToFile($en, $target, $true)
-                $files.Add($rel)
-            }
-            $extOk = $true
-        } finally { $zip.Dispose() }
-    } catch {
-        if (Get-Command tar.exe -ErrorAction SilentlyContinue) {
-            & tar.exe -xf $dp -C $ed 2>$null
-            if ($LASTEXITCODE -eq 0) { $extOk = $true }
-        }
-        if (-not $extOk) {
-            Expand-Archive -LiteralPath $dp -DestinationPath $ed -Force
-            $extOk = $true
-        }
-    }
-    if ($lf) { [IO.File]::WriteAllLines($lf, $files) }
-    if ($depotCache -ne '' -or $targetLua -ne '') {
-        if ($depotCache -ne '' -and -not (Test-Path -LiteralPath $depotCache)) {
-            New-Item -ItemType Directory -Path $depotCache -Force | Out-Null
-        }
-        $targetDir = if ($targetLua -ne '') { [IO.Path]::GetDirectoryName($targetLua) } else { '' }
-        if ($targetDir -ne '' -and -not (Test-Path -LiteralPath $targetDir)) {
-            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-        }
-        $manifestFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.manifest')
-        if ($depotCache -ne '' -and $manifestFiles.Count -gt 0) {
-            foreach ($mf in $manifestFiles) {
-                Copy-Item -LiteralPath $mf.FullName -Destination (Join-Path $depotCache $mf.Name) -Force
-            }
-        }
-        $luaWritten = $false
-        if ($targetLua -ne '') {
-            $luaFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.lua')
-            $chosenLua = $luaFiles | Where-Object { $_.Name -eq ($appidStr + '.lua') } | Select-Object -First 1
-            if (-not $chosenLua) {
-                $chosenLua = $luaFiles | Where-Object { $_.Name -match '^\d+\.lua$' } | Select-Object -First 1
-            }
-            if (-not $chosenLua -and $luaFiles.Count -gt 0) {
-                $chosenLua = $luaFiles[0]
-            }
-            if ($chosenLua) {
-                $text = [IO.File]::ReadAllText($chosenLua.FullName)
-                $text = [Text.RegularExpressions.Regex]::Replace($text, '(?m)^(\s*)(setManifestid\()', '$1-- $2')
-                [IO.File]::WriteAllText($targetLua, $text)
-                $luaWritten = $true
-            } else {
-                $vdfFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.vdf')
-                $depotKeys = @{}
-                foreach ($vf in $vdfFiles) {
-                    $vdfText = [IO.File]::ReadAllText($vf.FullName)
-                    $matches = [Text.RegularExpressions.Regex]::Matches($vdfText, '"(\d+)"\s*\{[\s\S]*?"[Dd]ecryption[Kk]ey"\s*"([0-9a-fA-F]{64})"')
-                    foreach ($m in $matches) {
-                        $depotKeys[$m.Groups[1].Value] = $m.Groups[2].Value
-                    }
+    return ((Test-Path -LiteralPath $destFile) -and (Get-Item -LiteralPath $destFile).Length -gt 0)
+}
+
+function Invoke-SmartDownload([string]$targetUrl, [string]$destFile) {
+    if (-not (Invoke-RawDownload $targetUrl $destFile)) { return $false }
+    $fileLen = (Get-Item -LiteralPath $destFile).Length
+    if ($fileLen -gt 0 -and $fileLen -lt 512) {
+        $headTxt = [IO.File]::ReadAllText($destFile)
+        if ($headTxt -match '^version https://git-lfs\.github\.com/spec/v1') {
+            if ($targetUrl -match '^https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/(?:refs/heads/)?([^/]+)/(.+)$') {
+                $lfsOwner  = $Matches[1]
+                $lfsRepo   = $Matches[2]
+                $lfsBranch = $Matches[3]
+                $lfsPath   = $Matches[4]
+                $mediaUrl  = "https://media.githubusercontent.com/media/$lfsOwner/$lfsRepo/$lfsBranch/$lfsPath"
+                if (-not (Invoke-RawDownload $mediaUrl $destFile)) {
+                    $rawRedirectUrl = "https://github.com/$lfsOwner/$lfsRepo/raw/$lfsBranch/$lfsPath"
+                    Invoke-RawDownload $rawRedirectUrl $destFile | Out-Null
                 }
-                if ($depotKeys.Count -gt 0 -or $manifestFiles.Count -gt 0) {
-                    $genLines = New-Object System.Collections.Generic.List[string]
-                    if ($appidStr -ne '') { $genLines.Add('addappid(' + $appidStr + ')') }
-                    foreach ($dk in $depotKeys.GetEnumerator()) {
-                        $genLines.Add('addappid(' + $dk.Key + ', 1, "' + $dk.Value + '")')
-                    }
-                    foreach ($mf in $manifestFiles) {
-                        if ($mf.BaseName -match '^(\d+)_(\d+)$') {
-                            $dId = $Matches[1]
-                            $mId = $Matches[2]
-                            if (-not $depotKeys.ContainsKey($dId)) {
-                                $genLines.Add('addappid(' + $dId + ')')
-                            }
-                            $genLines.Add('-- setManifestid(' + $dId + ', "' + $mId + '", 0)')
+            }
+        }
+    }
+    return ((Test-Path -LiteralPath $destFile) -and (Get-Item -LiteralPath $destFile).Length -gt 0)
+}
+
+try {
+    [IO.File]::WriteAllText($pf, [string]$PID)
+
+    $candidateSources = @()
+    if ($sourcesJson -and $sourcesJson -ne '') {
+        try {
+            $parsed = ConvertFrom-Json $sourcesJson
+            if ($parsed) {
+                foreach ($item in @($parsed)) {
+                    if ($item -and $item.url) {
+                        $candidateSources += [PSCustomObject]@{
+                            name = [string]($item.name)
+                            url  = [string]($item.url)
                         }
                     }
-                    [IO.File]::WriteAllText($targetLua, ($genLines -join "`n"))
-                    $luaWritten = $true
                 }
             }
-        }
-        if (-not $luaWritten -and $manifestFiles.Count -eq 0) {
-            throw 'No valid .lua or .manifest files found in archive'
+        } catch {}
+    }
+    if ($candidateSources.Count -eq 0 -and $url -ne '') {
+        $candidateSources += [PSCustomObject]@{ name = ''; url = $url }
+    }
+    if ($candidateSources.Count -eq 0) {
+        throw 'Nenhuma URL de download disponivel'
+    }
+
+    $jobSuccess = $false
+    $winningApi = ''
+    $lastError  = 'Formato de arquivo invalido ou fonte indisponivel'
+    $recordedFiles = New-Object System.Collections.Generic.List[string]
+
+    foreach ($src in $candidateSources) {
+        $curUrl = [string]$src.url
+        $curApi = [string]$src.name
+        try {
+            Set-State 'downloading' '' 55 100 $curApi
+            if (-not (Invoke-SmartDownload $curUrl $dp)) {
+                $lastError = "Falha ao baixar de $curApi"
+                continue
+            }
+
+            Set-State 'extracting' '' 85 100 $curApi
+            if (Test-Path -LiteralPath $ed) {
+                Remove-Item -LiteralPath $ed -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            New-Item -ItemType Directory -Path $ed -Force | Out-Null
+            $root = [IO.Path]::GetFullPath($ed).TrimEnd('\', '/') + '\'
+            $files = New-Object System.Collections.Generic.List[string]
+
+            # Read magic bytes to verify archive format before invoking extractors
+            $fsStream = [IO.File]::OpenRead($dp)
+            $magic = New-Object byte[] 8
+            $readCount = $fsStream.Read($magic, 0, 8)
+            $fsStream.Close()
+
+            $isZip  = ($readCount -ge 4 -and $magic[0] -eq 0x50 -and $magic[1] -eq 0x4B)
+            $isGzip = ($readCount -ge 2 -and $magic[0] -eq 0x1F -and $magic[1] -eq 0x8B)
+            $is7z   = ($readCount -ge 6 -and $magic[0] -eq 0x37 -and $magic[1] -eq 0x7A -and $magic[2] -eq 0xBC -and $magic[3] -eq 0xAF)
+            $isRar  = ($readCount -ge 4 -and $magic[0] -eq 0x52 -and $magic[1] -eq 0x61 -and $magic[2] -eq 0x72 -and $magic[3] -eq 0x21)
+
+            $extOk = $false
+            if ($isZip) {
+                try {
+                    $zip = [IO.Compression.ZipFile]::OpenRead($dp)
+                    try {
+                        foreach ($en in $zip.Entries) {
+                            $rel = $en.FullName.Replace('\', '/')
+                            $target = [IO.Path]::GetFullPath([IO.Path]::Combine($root, $rel))
+                            if (-not $target.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) { continue }
+                            if ($rel.EndsWith('/')) { [IO.Directory]::CreateDirectory($target) | Out-Null; continue }
+                            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
+                            [IO.Compression.ZipFileExtensions]::ExtractToFile($en, $target, $true)
+                            $files.Add($rel)
+                        }
+                        $extOk = $true
+                    } finally { $zip.Dispose() }
+                } catch {
+                    try {
+                        Expand-Archive -LiteralPath $dp -DestinationPath $ed -Force
+                        $extOk = $true
+                    } catch {}
+                }
+            }
+
+            if (-not $extOk -and ($isZip -or $isGzip -or $is7z -or $isRar)) {
+                if (Get-Command tar.exe -ErrorAction SilentlyContinue) {
+                    $oldEap = $ErrorActionPreference
+                    $ErrorActionPreference = 'Continue'
+                    try {
+                        & tar.exe -xf $dp -C $ed 2>$null
+                        if ($LASTEXITCODE -eq 0) { $extOk = $true }
+                    } catch {}
+                    $ErrorActionPreference = $oldEap
+                }
+            }
+
+            if (-not $extOk) {
+                # Check if the API returned a raw .lua script directly instead of an archive
+                $fileLen = (Get-Item -LiteralPath $dp).Length
+                if ($fileLen -gt 10 -and $fileLen -lt 524288) {
+                    $rawText = [IO.File]::ReadAllText($dp)
+                    if ($rawText -notmatch '(?i)<!DOCTYPE|<html' -and $rawText -match 'addappid\s*\(|setManifestid\s*\(') {
+                        $luaName = if ($appidStr -ne '') { "$appidStr.lua" } else { 'manifest.lua' }
+                        $destLua = Join-Path $ed $luaName
+                        [IO.File]::WriteAllText($destLua, $rawText)
+                        $files.Add($luaName)
+                        $extOk = $true
+                    }
+                }
+            }
+
+            if (-not $extOk) {
+                $lastError = "A fonte '$curApi' retornou um formato invalido (nao e um arquivo .zip/.lua valido)"
+                continue
+            }
+
+            if ($depotCache -ne '' -or $targetLua -ne '') {
+                if ($depotCache -ne '' -and -not (Test-Path -LiteralPath $depotCache)) {
+                    New-Item -ItemType Directory -Path $depotCache -Force | Out-Null
+                }
+                $targetDir = if ($targetLua -ne '') { [IO.Path]::GetDirectoryName($targetLua) } else { '' }
+                if ($targetDir -ne '' -and -not (Test-Path -LiteralPath $targetDir)) {
+                    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                }
+                $manifestFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.manifest')
+                if ($depotCache -ne '' -and $manifestFiles.Count -gt 0) {
+                    foreach ($mf in $manifestFiles) {
+                        Copy-Item -LiteralPath $mf.FullName -Destination (Join-Path $depotCache $mf.Name) -Force
+                    }
+                }
+                $luaWritten = $false
+                if ($targetLua -ne '') {
+                    $luaFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.lua')
+                    $chosenLua = $luaFiles | Where-Object { $_.Name -eq ($appidStr + '.lua') } | Select-Object -First 1
+                    if (-not $chosenLua) {
+                        $chosenLua = $luaFiles | Where-Object { $_.Name -match '^\d+\.lua$' } | Select-Object -First 1
+                    }
+                    if (-not $chosenLua -and $luaFiles.Count -gt 0) {
+                        $chosenLua = $luaFiles[0]
+                    }
+                    if ($chosenLua) {
+                        $text = [IO.File]::ReadAllText($chosenLua.FullName)
+                        $text = [Text.RegularExpressions.Regex]::Replace($text, '(?m)^(\s*)(setManifestid\()', '$1-- $2')
+                        [IO.File]::WriteAllText($targetLua, $text)
+                        $luaWritten = $true
+                    } else {
+                        $vdfFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.vdf')
+                        $depotKeys = @{}
+                        foreach ($vf in $vdfFiles) {
+                            $vdfText = [IO.File]::ReadAllText($vf.FullName)
+                            $matches = [Text.RegularExpressions.Regex]::Matches($vdfText, '"(\d+)"\s*\{[\s\S]*?"[Dd]ecryption[Kk]ey"\s*"([0-9a-fA-F]{64})"')
+                            foreach ($m in $matches) {
+                                $depotKeys[$m.Groups[1].Value] = $m.Groups[2].Value
+                            }
+                        }
+                        if ($depotKeys.Count -gt 0 -or $manifestFiles.Count -gt 0) {
+                            $genLines = New-Object System.Collections.Generic.List[string]
+                            if ($appidStr -ne '') { $genLines.Add('addappid(' + $appidStr + ')') }
+                            foreach ($dk in $depotKeys.GetEnumerator()) {
+                                $genLines.Add('addappid(' + $dk.Key + ', 1, "' + $dk.Value + '")')
+                            }
+                            foreach ($mf in $manifestFiles) {
+                                if ($mf.BaseName -match '^(\d+)_(\d+)$') {
+                                    $dId = $Matches[1]
+                                    $mId = $Matches[2]
+                                    if (-not $depotKeys.ContainsKey($dId)) {
+                                        $genLines.Add('addappid(' + $dId + ')')
+                                    }
+                                    $genLines.Add('-- setManifestid(' + $dId + ', "' + $mId + '", 0)')
+                                }
+                            }
+                            [IO.File]::WriteAllText($targetLua, ($genLines -join "`n"))
+                            $luaWritten = $true
+                        }
+                    }
+                }
+                if (-not $luaWritten -and $manifestFiles.Count -eq 0) {
+                    $lastError = "Nenhum arquivo .lua ou .manifest encontrado em '$curApi'"
+                    continue
+                }
+            }
+
+            $recordedFiles = $files
+            $winningApi = $curApi
+            $jobSuccess = $true
+            break
+        } catch {
+            $lastError = $_.Exception.Message
+            continue
         }
     }
+
+    if (-not $jobSuccess) {
+        throw $lastError
+    }
+
+    if ($lf) { [IO.File]::WriteAllLines($lf, $recordedFiles) }
     Remove-Item -LiteralPath $dp -Force -ErrorAction SilentlyContinue
-    Set-State 'extracted' '' 100 100
+    Set-State 'extracted' '' 100 100 $winningApi
 } catch {
     Set-State 'failed' ($_.Exception.Message) 0 100
 } finally {
@@ -189,7 +320,7 @@ try {
 ]==]
 
 --- Launch a background job.
--- opts: { id, url, extract_dir, record_files (bool), user_agent, appid, depot_cache, target_lua }
+-- opts: { id, url, sources, extract_dir, record_files (bool), user_agent, appid, depot_cache, target_lua }
 function bg_job.launch(opts)
     local f = bg_job.files_for(opts.id)
     local extract_dir = opts.extract_dir
@@ -206,19 +337,25 @@ function bg_job.launch(opts)
     local depot_cache = opts.depot_cache and fwd(opts.depot_cache) or ""
     local target_lua  = opts.target_lua and fwd(opts.target_lua) or ""
     local appid_str   = opts.appid and tostring(opts.appid) or ""
+    local sources_json = ""
+    if type(opts.sources) == "table" and #opts.sources > 0 then
+        local ok_s, s_enc = pcall(cjson.encode, opts.sources)
+        if ok_s and s_enc then sources_json = s_enc end
+    end
 
     if is_windows() then
         local header =
-            "$sf         = " .. ps_quote(fwd(f.state)) .. "\r\n" ..
-            "$pf         = " .. ps_quote(fwd(f.pid)) .. "\r\n" ..
-            "$url        = " .. ps_quote(opts.url) .. "\r\n" ..
-            "$dp         = " .. ps_quote(fwd(f.zip)) .. "\r\n" ..
-            "$ed         = " .. ps_quote(fwd(extract_dir)) .. "\r\n" ..
-            "$lf         = " .. ps_quote(list_file ~= "" and fwd(list_file) or "") .. "\r\n" ..
-            "$ua         = " .. ps_quote(ua) .. "\r\n" ..
-            "$depotCache = " .. ps_quote(depot_cache) .. "\r\n" ..
-            "$targetLua  = " .. ps_quote(target_lua) .. "\r\n" ..
-            "$appidStr   = " .. ps_quote(appid_str) .. "\r\n"
+            "$sf          = " .. ps_quote(fwd(f.state)) .. "\r\n" ..
+            "$pf          = " .. ps_quote(fwd(f.pid)) .. "\r\n" ..
+            "$url         = " .. ps_quote(opts.url or "") .. "\r\n" ..
+            "$sourcesJson = " .. ps_quote(sources_json) .. "\r\n" ..
+            "$dp          = " .. ps_quote(fwd(f.zip)) .. "\r\n" ..
+            "$ed          = " .. ps_quote(fwd(extract_dir)) .. "\r\n" ..
+            "$lf          = " .. ps_quote(list_file ~= "" and fwd(list_file) or "") .. "\r\n" ..
+            "$ua          = " .. ps_quote(ua) .. "\r\n" ..
+            "$depotCache  = " .. ps_quote(depot_cache) .. "\r\n" ..
+            "$targetLua   = " .. ps_quote(target_lua) .. "\r\n" ..
+            "$appidStr    = " .. ps_quote(appid_str) .. "\r\n"
         local body = PS_TEMPLATE:gsub("\r?\n", "\r\n")
         -- Write the PowerShell script with UTF-8 BOM so Windows PowerShell 5 reads non-ASCII paths properly
         m_utils.write_file(f.script, UTF8_BOM .. header .. body)

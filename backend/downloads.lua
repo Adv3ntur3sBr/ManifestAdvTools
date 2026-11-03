@@ -33,6 +33,62 @@ local function _get_download_state(appid)
     return copy
 end
 
+-- Validate HTTP response so soft-404 HTML pages, Cloudflare challenges, or JSON errors
+-- returning HTTP 200 are never treated as valid manifest archives.
+-- Returns: is_valid (bool), resolved_url (string)
+local function _validate_manifest_response(resp, url)
+    if not resp then return false, url end
+
+    if type(resp.headers) == "table" then
+        for hk, hv in pairs(resp.headers) do
+            if tostring(hk):lower() == "content-type" then
+                local ct = tostring(hv):lower()
+                if ct:find("text/html", 1, true) or ct:find("application/json", 1, true) or ct:find("application/problem", 1, true) then
+                    return false, url
+                end
+            end
+        end
+    end
+
+    local body = resp.body
+    if type(body) == "string" and #body > 0 then
+        -- Git LFS pointer check
+        if #body < 512 and body:sub(1, 40):find("version https://git-lfs.github.com", 1, true) then
+            local owner, repo, branch, path = url:match("^https?://raw%.githubusercontent%.com/([^/]+)/([^/]+)/(?:refs/heads/)?([^/]+)/(.+)$")
+            if not owner then
+                owner, repo, branch, path = url:match("^https?://raw%.githubusercontent%.com/([^/]+)/([^/]+)/refs/heads/([^/]+)/(.+)$")
+            end
+            if not owner then
+                owner, repo, branch, path = url:match("^https?://raw%.githubusercontent%.com/([^/]+)/([^/]+)/([^/]+)/(.+)$")
+            end
+            if owner and repo and branch and path then
+                return true, "https://media.githubusercontent.com/media/" .. owner .. "/" .. repo .. "/" .. branch .. "/" .. path
+            end
+            return false, url
+        end
+
+        -- Magic bytes: ZIP ("PK"), Gzip (\31\139), 7z ("7z\188\175"), RAR ("Rar!")
+        local b2 = body:sub(1, 2)
+        local b4 = body:sub(1, 4)
+        if b2 == "PK" or b2 == "\31\139" or b4 == "7z\188\175" or b4 == "Rar!" then
+            return true, url
+        end
+
+        -- Raw .lua script check
+        local head_lower = body:sub(1, 512):lower()
+        if not head_lower:find("<!doctype", 1, true) and not head_lower:find("<html", 1, true) then
+            if body:find("addappid%s*%(") or body:find("setManifestid%s*%(") then
+                return true, url
+            end
+        end
+
+        -- Non-empty body that isn't a valid archive or .lua script (e.g. HTML/JSON/text error)
+        return false, url
+    end
+
+    return true, url
+end
+
 function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name)
     _set_download_state(appid, { status = "processing" })
     local base_path = steam_utils.detect_steam_install_path()
@@ -107,18 +163,22 @@ function downloads.get_add_status(appid)
     local state = bg_job.read_state(job_id)
 
     if state.status then
-        _set_download_state(appid, {
+        local upd = {
             status = state.status,
             error = state.error,
             bytesRead = state.bytesRead or 50,
             totalBytes = state.totalBytes or 100
-        })
+        }
+        if state.currentApi and state.currentApi ~= "" then
+            upd.currentApi = state.currentApi
+        end
+        _set_download_state(appid, upd)
 
         if state.status == "extracted" then
             local dest_root = utils.ensure_temp_download_dir()
             local dest_path = fs.join(dest_root, tostring(appid) .. ".zip")
             local extract_dir = fs.join(dest_root, "extracted_" .. tostring(appid))
-            local apiName = _get_download_state(appid).currentApi or "Unknown"
+            local apiName = (state.currentApi and state.currentApi ~= "") and state.currentApi or (_get_download_state(appid).currentApi or "Unknown")
 
             local ok, res = pcall(downloads._finalize_install_lua, appid, extract_dir, dest_path, apiName)
             if not ok then
@@ -156,7 +216,20 @@ function downloads.start_add_via_luatools_from_url(appid, url, apiName)
     end
     apiName = (apiName and apiName ~= "") and apiName or "ManifestAdvTools"
 
-    logger.log("downloads: start_add_via_luatools_from_url appid=" .. tostring(appid) .. " api=" .. tostring(apiName))
+    -- Build ordered candidate sources list (primary selected URL first, followed by cached available sources)
+    local candidate_sources = { { name = apiName, url = url } }
+    local seen_urls = { [url] = true }
+    local cur_state = _get_download_state(appid)
+    if type(cur_state.availableSources) == "table" then
+        for _, src in ipairs(cur_state.availableSources) do
+            if src and src.url and not seen_urls[src.url] then
+                table.insert(candidate_sources, { name = src.name or "Fallback", url = src.url })
+                seen_urls[src.url] = true
+            end
+        end
+    end
+
+    logger.log("downloads: start_add_via_luatools_from_url appid=" .. tostring(appid) .. " api=" .. tostring(apiName) .. " candidates=" .. tostring(#candidate_sources))
     _set_download_state(appid, {
         status = "downloading",
         currentApi = apiName,
@@ -174,6 +247,7 @@ function downloads.start_add_via_luatools_from_url(appid, url, apiName)
     local ok, err = pcall(bg_job.launch, {
         id = tostring(appid),
         url = url,
+        sources = candidate_sources,
         extract_dir = extract_dir,
         record_files = false,
         user_agent = "ManifestAdvTools",
@@ -247,6 +321,7 @@ function downloads.check_apis_for_app(appid)
     end
 
     local results = {}
+    local available_sources = {}
     local morrenus_api_key = settings_manager.get_morrenus_api_key()
 
     for _, api in ipairs(apis) do
@@ -276,19 +351,51 @@ function downloads.check_apis_for_app(appid)
             if resp and resp.status == success_code then
                 available = true
             end
+        elseif string.find(url, "codeload%.github%.com") then
+            -- Fast check for GitHub branch-per-appid repos: probe <appid>.lua via raw.githubusercontent.com first
+            local owner, repo, branch = url:match("codeload%.github%.com/([^/]+)/([^/]+)/zip/refs/heads/([^/?#]+)")
+            if owner and repo and branch then
+                local probe_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/" .. branch .. "/" .. tostring(appid) .. ".lua"
+                local p_resp = http_client.head(probe_url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+                if p_resp and p_resp.status == 200 then
+                    available = true
+                end
+            end
+            if not available then
+                local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
+                if resp and resp.status == success_code then
+                    local ok_v, res_u = _validate_manifest_response(resp, url)
+                    if ok_v then
+                        available = true
+                        url = res_u
+                    end
+                end
+            end
         else
             local resp = http_client.head(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
             if resp and resp.status == success_code then
-                available = true
-            elseif not string.find(url, "codeload%.github%.com") then
+                local ok_v, res_u = _validate_manifest_response(resp, url)
+                if ok_v then
+                    available = true
+                    url = res_u
+                end
+            else
                 local st = resp and tonumber(resp.status) or 0
                 if st == 0 or st == 405 or st == 501 then
                     local get_resp = http_client.get(url, { headers = { ["User-Agent"] = config.USER_AGENT }, timeout = 4 })
                     if get_resp and get_resp.status == success_code then
-                        available = true
+                        local ok_v, res_u = _validate_manifest_response(get_resp, url)
+                        if ok_v then
+                            available = true
+                            url = res_u
+                        end
                     end
                 end
             end
+        end
+
+        if available then
+            table.insert(available_sources, { name = name, url = url })
         end
 
         table.insert(results, {
@@ -300,6 +407,7 @@ function downloads.check_apis_for_app(appid)
         ::continue::
     end
 
+    _set_download_state(appid, { availableSources = available_sources })
     return { success = true, results = results }
 end
 
@@ -314,6 +422,18 @@ function downloads.start_add_with_online_fix(appid, manifest_url, api_name, inst
         end
     end
     api_name = (api_name and api_name ~= "") and api_name or "ManifestAdvTools"
+
+    local candidate_sources = { { name = api_name, url = manifest_url } }
+    local seen_urls = { [manifest_url] = true }
+    local cur_state = _get_download_state(appid)
+    if type(cur_state.availableSources) == "table" then
+        for _, src in ipairs(cur_state.availableSources) do
+            if src and src.url and not seen_urls[src.url] then
+                table.insert(candidate_sources, { name = src.name or "Fallback", url = src.url })
+                seen_urls[src.url] = true
+            end
+        end
+    end
 
     logger.log("downloads: Bundle download appid=" .. tostring(appid) .. " manifest=" .. tostring(manifest_url))
 
@@ -335,8 +455,11 @@ function downloads.start_add_with_online_fix(appid, manifest_url, api_name, inst
     for _, curl in ipairs(candidate_urls) do
         local fix_resp = http_client.head(curl, { timeout = 4 })
         if fix_resp and (fix_resp.status == 200 or fix_resp.status == 301 or fix_resp.status == 302) then
-            fix_url = curl
-            break
+            local ok_v, res_u = _validate_manifest_response(fix_resp, curl)
+            if ok_v then
+                fix_url = res_u
+                break
+            end
         end
     end
 
@@ -363,6 +486,7 @@ function downloads.start_add_with_online_fix(appid, manifest_url, api_name, inst
     bg_job.launch({
         id = tostring(appid),
         url = manifest_url,
+        sources = candidate_sources,
         extract_dir = extract_dir,
         record_files = false,
         user_agent = "ManifestAdvTools",
@@ -398,7 +522,7 @@ function downloads.get_bundle_status(appid)
         local dest_root  = utils.ensure_temp_download_dir()
         local dest_path  = fs.join(dest_root, tostring(appid) .. ".zip")
         local extract_dir = fs.join(dest_root, "extracted_" .. tostring(appid))
-        local apiName = cur.currentApi or "OnlineFix Bundle"
+        local apiName = (ms.currentApi and ms.currentApi ~= "") and ms.currentApi or (cur.currentApi or "OnlineFix Bundle")
 
         local ok, res = pcall(downloads._finalize_install_lua, appid, extract_dir, dest_path, apiName)
         if not ok then

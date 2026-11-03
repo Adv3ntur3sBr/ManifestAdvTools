@@ -2379,7 +2379,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.6\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.7\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -6294,7 +6294,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.6";
+      heroTitle.textContent = "ManifestAdvTools v8.4.7";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -8392,17 +8392,6 @@ function addLuaToolsButton() {
                   showTestPopup();
                 }
 
-                Millennium.callServerMethod(
-                  "ManifestAdvTools",
-                  "StartAddViaLuaToolsFromUrl",
-                  {
-                    appid,
-                    url,
-                    apiName,
-                    contentScriptQuery: "",
-                  },
-                );
-
                 const onFailedCallback = function (errMsg) {
                   if (index + 1 < availableSources.length) {
                     backendLog(
@@ -8415,11 +8404,26 @@ function addLuaToolsButton() {
                     );
                     setTimeout(function () {
                       startDirectDownload(appid, availableSources, index + 1);
-                    }, 1500);
+                    }, 600);
                   }
                 };
 
-                startPolling(appid, onFailedCallback);
+                Millennium.callServerMethod(
+                  "ManifestAdvTools",
+                  "StartAddViaLuaToolsFromUrl",
+                  {
+                    appid,
+                    url,
+                    apiName,
+                    contentScriptQuery: "",
+                  },
+                )
+                  .then(function () {
+                    startPolling(appid, onFailedCallback);
+                  })
+                  .catch(function () {
+                    startPolling(appid, onFailedCallback);
+                  });
               };
 
               if (apiName && apiName.toLowerCase().includes("morrenus")) {
@@ -8706,7 +8710,7 @@ function addLuaToolsButton() {
               const colors = getThemeColors();
               const apiItems = overlay.querySelectorAll(".luatools-api-item");
 
-              // Track successful API when download/processing starts
+              // Track successful API when download/processing starts (or updates on fallback)
               if (
                 (st.status === "downloading" ||
                   st.status === "processing" ||
@@ -8714,7 +8718,7 @@ function addLuaToolsButton() {
                   st.status === "extracting" ||
                   st.status === "done") &&
                 st.currentApi &&
-                !successfulApi
+                st.currentApi !== successfulApi
               ) {
                 successfulApi = st.currentApi;
 
