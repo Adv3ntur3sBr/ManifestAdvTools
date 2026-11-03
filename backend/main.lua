@@ -554,6 +554,23 @@ function GetGameInstallPath(appid)
     return json_ok(res)
 end
 
+function GetInstalledGamesForVerify(arg1, arg2)
+    local owned_json = ""
+    if type(arg1) == "table" then
+        owned_json = tostring(arg1.ownedAppsJson or arg1.owned_apps_json or "")
+    elseif type(arg2) == "string" and arg2 ~= "" then
+        owned_json = arg2
+    elseif type(arg1) == "string" and arg1 ~= "" then
+        owned_json = arg1
+    end
+    local ok, res = pcall(steam_utils.get_installed_games_for_verify, owned_json)
+    if not ok then return json_err(res) end
+    if res and type(res.games) == "table" and #res.games == 0 then
+        return '{"success":true,"games":[]}'
+    end
+    return json_ok(res)
+end
+
 function OpenGameFolder(path)
     if type(path) == "table" then path = path.path end
     local ok, success = pcall(steam_utils.open_game_folder, tostring(path or ""))

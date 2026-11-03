@@ -1714,6 +1714,332 @@
     document.body.appendChild(overlay);
   }
 
+  function fetchSteamOwnedApps() {
+    return new Promise(function (resolve) {
+      let settled = false;
+      const done = function (list) {
+        if (settled) return;
+        settled = true;
+        resolve(Array.isArray(list) ? list : []);
+      };
+      const timer = setTimeout(function () {
+        done([]);
+      }, 4500);
+
+      try {
+        fetch("https://store.steampowered.com/dynamicstore/userdata/?t=" + Date.now(), {
+          method: "GET",
+          credentials: "include",
+        })
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (data) {
+            clearTimeout(timer);
+            if (data && Array.isArray(data.rgOwnedApps)) {
+              done(data.rgOwnedApps);
+            } else {
+              done([]);
+            }
+          })
+          .catch(function () {
+            clearTimeout(timer);
+            done([]);
+          });
+      } catch (_) {
+        clearTimeout(timer);
+        done([]);
+      }
+    });
+  }
+
+  function showVerifyInstalledGamesModal() {
+    try {
+      const existing = document.querySelector(".luatools-verify-overlay");
+      if (existing) existing.remove();
+    } catch (_) {}
+
+    ensureLuaToolsStyles();
+    ensureFontAwesome();
+
+    const colors = getThemeColors();
+    const overlay = document.createElement("div");
+    overlay.className = "luatools-overlay luatools-verify-overlay";
+    overlay.style.cssText =
+      "position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);z-index:99999;display:flex;align-items:center;justify-content:center;";
+
+    const modal = document.createElement("div");
+    modal.style.cssText = `position:relative;background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.borderRgba};border-radius:14px;width:540px;max-width:calc(100vw - 32px);padding:20px 22px;box-shadow:0 24px 64px rgba(0,0,0,.65);animation:slideUp 0.12s ease-out;`;
+
+    const header = document.createElement("div");
+    header.style.cssText = `display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid ${colors.borderRgba};`;
+
+    const title = document.createElement("div");
+    title.style.cssText = `display:flex;align-items:center;gap:10px;font-size:18px;font-weight:600;color:${colors.text};`;
+    title.innerHTML =
+      `<i class="fa-solid fa-shield-halved" style="color:${colors.accent};font-size:18px;"></i>` +
+      `<span>Verificar Jogos Instalados (Sem Licença)</span>`;
+
+    const closeTopBtn = document.createElement("a");
+    closeTopBtn.href = "#";
+    closeTopBtn.style.cssText = `display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;color:${colors.textSecondary};text-decoration:none;`;
+    closeTopBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    closeTopBtn.onclick = function (e) {
+      e.preventDefault();
+      overlay.remove();
+    };
+
+    header.appendChild(title);
+    header.appendChild(closeTopBtn);
+
+    const desc = document.createElement("div");
+    desc.style.cssText = `font-size:12.5px;color:${colors.textSecondary};margin-bottom:12px;line-height:1.45;`;
+    desc.textContent =
+      "Escaneia os jogos instalados no PC que você não possui licença oficial na Steam e reinstala os arquivos .lua e .manifest perdidos.";
+
+    const listWrap = document.createElement("div");
+    listWrap.style.cssText = `max-height:310px;overflow-y:auto;border:1px solid ${colors.borderRgba};border-radius:10px;padding:10px;background:rgba(0,0,0,0.22);margin-bottom:14px;`;
+    listWrap.innerHTML =
+      `<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:28px 12px;color:${colors.textSecondary};font-size:13.5px;">` +
+      `<i class="fa-solid fa-spinner" style="color:${colors.accent};animation:spin 1.2s linear infinite;"></i>` +
+      `<span>Verificando bibliotecas da Steam e licenças da conta...</span></div>`;
+
+    const progressSummary = document.createElement("div");
+    progressSummary.style.cssText = `display:none;font-size:12.5px;color:${colors.textSecondary};margin-bottom:10px;text-align:center;`;
+
+    const footer = document.createElement("div");
+    footer.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:10px;";
+
+    const leftActions = document.createElement("div");
+    leftActions.style.cssText = "display:flex;gap:8px;align-items:center;";
+
+    const rightActions = document.createElement("div");
+    rightActions.style.cssText = "display:flex;gap:8px;align-items:center;margin-left:auto;";
+
+    const closeBtn = document.createElement("a");
+    closeBtn.href = "#";
+    closeBtn.className = "luatools-btn";
+    closeBtn.innerHTML = "<span>Fechar</span>";
+    closeBtn.onclick = function (e) {
+      e.preventDefault();
+      overlay.remove();
+    };
+    rightActions.appendChild(closeBtn);
+
+    footer.appendChild(leftActions);
+    footer.appendChild(rightActions);
+
+    modal.appendChild(header);
+    modal.appendChild(desc);
+    modal.appendChild(listWrap);
+    modal.appendChild(progressSummary);
+    modal.appendChild(footer);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    fetchSteamOwnedApps().then(function (ownedApps) {
+      Millennium.callServerMethod("ManifestAdvTools", "GetInstalledGamesForVerify", {
+        contentScriptQuery: "",
+        ownedAppsJson: JSON.stringify(ownedApps || []),
+      })
+        .then(function (res) {
+          const payload = typeof res === "string" ? JSON.parse(res) : res;
+          const games = payload && Array.isArray(payload.games) ? payload.games : [];
+
+          listWrap.innerHTML = "";
+          if (!games.length) {
+            listWrap.innerHTML =
+              `<div style="text-align:center;padding:26px 14px;color:${colors.textSecondary};font-size:13.5px;">` +
+              `<i class="fa-solid fa-circle-check" style="color:${colors.accent};font-size:20px;display:block;margin-bottom:8px;"></i>` +
+              `Nenhum jogo instalado sem licença foi encontrado nas suas bibliotecas.</div>`;
+            return;
+          }
+
+          const checkboxes = [];
+          const statusLabels = {};
+
+          const updateRestoreButtonLabel = function () {
+            const selectedCount = checkboxes.filter((c) => c.checked && !c.disabled).length;
+            restoreBtn.style.opacity = selectedCount > 0 ? "1" : "0.5";
+            restoreBtn.style.pointerEvents = selectedCount > 0 ? "auto" : "none";
+            restoreBtn.innerHTML =
+              `<i class="fa-solid fa-download" style="margin-right:6px;"></i>` +
+              `<span>Restaurar Manifests (${selectedCount})</span>`;
+          };
+
+          games.forEach(function (g) {
+            const row = document.createElement("label");
+            row.style.cssText = `display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:9px 11px;margin-bottom:6px;background:rgba(255,255,255,0.025);border:1px solid ${
+              g.needsRestore ? "rgba(255,170,60,0.35)" : "rgba(255,255,255,0.07)"
+            };border-radius:8px;cursor:pointer;transition:background 0.15s ease;`;
+
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = !!g.needsRestore;
+            cb.dataset.appid = String(g.appid);
+            cb.style.cssText = "width:16px;height:16px;cursor:pointer;accent-color:" + colors.accent + ";";
+            cb.onchange = updateRestoreButtonLabel;
+            checkboxes.push(cb);
+
+            const info = document.createElement("div");
+            info.style.cssText = "display:flex;flex-direction:column;min-width:0;";
+            info.innerHTML =
+              `<span style="font-size:13.5px;font-weight:600;color:${colors.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${g.name || "App " + g.appid}</span>` +
+              `<span style="font-size:11.5px;color:${colors.textSecondary};">AppID: ${g.appid}</span>`;
+
+            const badge = document.createElement("div");
+            badge.style.cssText = "font-size:12px;font-weight:600;white-space:nowrap;";
+            if (g.needsRestore) {
+              const reason = !g.hasLua ? "Sem .lua / Manifest" : `Faltando ${g.missingManifests} manifest(s)`;
+              badge.innerHTML = `<span style="color:#fbbf24;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>${reason}</span>`;
+            } else {
+              badge.innerHTML = `<span style="color:#4ade80;"><i class="fa-solid fa-check" style="margin-right:4px;"></i>Manifest OK</span>`;
+            }
+            statusLabels[g.appid] = badge;
+
+            row.appendChild(cb);
+            row.appendChild(info);
+            row.appendChild(badge);
+            listWrap.appendChild(row);
+          });
+
+          const selectAllBtn = document.createElement("a");
+          selectAllBtn.href = "#";
+          selectAllBtn.className = "luatools-btn";
+          selectAllBtn.style.cssText = "padding:6px 10px;font-size:12px;";
+          selectAllBtn.innerHTML = "<span>Selecionar Todos</span>";
+          selectAllBtn.onclick = function (e) {
+            e.preventDefault();
+            const allChecked = checkboxes.every((c) => c.checked);
+            checkboxes.forEach((c) => {
+              if (!c.disabled) c.checked = !allChecked;
+            });
+            updateRestoreButtonLabel();
+          };
+          leftActions.appendChild(selectAllBtn);
+
+          const restoreBtn = document.createElement("a");
+          restoreBtn.href = "#";
+          restoreBtn.className = "luatools-btn primary";
+          restoreBtn.style.cssText = "display:flex;align-items:center;justify-content:center;";
+          rightActions.insertBefore(restoreBtn, closeBtn);
+          updateRestoreButtonLabel();
+
+          const pollSingleAppRestore = function (appid, badgeEl) {
+            return new Promise(function (resolve) {
+              let polls = 0;
+              const maxPolls = 240;
+              const iv = setInterval(function () {
+                if (++polls > maxPolls) {
+                  clearInterval(iv);
+                  resolve({ ok: false, error: "Timeout" });
+                  return;
+                }
+                Millennium.callServerMethod("ManifestAdvTools", "GetAddViaLuaToolsStatus", {
+                  appid: appid,
+                  contentScriptQuery: "",
+                })
+                  .then(function (r) {
+                    const p = typeof r === "string" ? JSON.parse(r) : r;
+                    const st = p && p.state ? p.state : {};
+                    if (st.status === "downloading") {
+                      badgeEl.innerHTML = `<span style="color:${colors.accent};"><i class="fa-solid fa-cloud-arrow-down" style="margin-right:4px;"></i>Baixando (${st.currentApi || "API"})...</span>`;
+                    } else if (st.status === "extracting" || st.status === "processing" || st.status === "installing") {
+                      badgeEl.innerHTML = `<span style="color:${colors.accent};"><i class="fa-solid fa-gear" style="animation:spin 2s linear infinite;margin-right:4px;"></i>Instalando...</span>`;
+                    } else if (st.status === "done") {
+                      clearInterval(iv);
+                      resolve({ ok: true, api: st.currentApi || st.api || "OK" });
+                    } else if (st.status === "failed" || st.status === "cancelled") {
+                      clearInterval(iv);
+                      resolve({ ok: false, error: st.error || "Não encontrado" });
+                    }
+                  })
+                  .catch(function () {});
+              }, 500);
+            });
+          };
+
+          restoreBtn.onclick = async function (e) {
+            e.preventDefault();
+            const selected = checkboxes
+              .filter((c) => c.checked && !c.disabled)
+              .map((c) => parseInt(c.dataset.appid, 10));
+            if (!selected.length) return;
+
+            restoreBtn.style.pointerEvents = "none";
+            restoreBtn.style.opacity = "0.6";
+            selectAllBtn.style.display = "none";
+            checkboxes.forEach((c) => {
+              c.disabled = true;
+            });
+
+            progressSummary.style.display = "block";
+            let restoredCount = 0;
+
+            for (let i = 0; i < selected.length; i++) {
+              const appid = selected[i];
+              const badgeEl = statusLabels[appid];
+              progressSummary.textContent = `Restaurando jogo ${i + 1} de ${selected.length}...`;
+              if (badgeEl) {
+                badgeEl.innerHTML = `<span style="color:${colors.accent};"><i class="fa-solid fa-spinner" style="animation:spin 1.2s linear infinite;margin-right:4px;"></i>Buscando nas APIs...</span>`;
+              }
+
+              try {
+                const startRes = await Millennium.callServerMethod(
+                  "ManifestAdvTools",
+                  "StartAddViaLuaTools",
+                  { appid: appid, contentScriptQuery: "" }
+                );
+                const startPayload =
+                  typeof startRes === "string" ? JSON.parse(startRes) : startRes;
+                if (!startPayload || !startPayload.success) {
+                  if (badgeEl) {
+                    badgeEl.innerHTML = `<span style="color:#ff5c5c;"><i class="fa-solid fa-xmark" style="margin-right:4px;"></i>Não encontrado</span>`;
+                  }
+                  continue;
+                }
+
+                const result = await pollSingleAppRestore(appid, badgeEl);
+                if (result.ok) {
+                  restoredCount++;
+                  if (badgeEl) {
+                    badgeEl.innerHTML = `<span style="color:#4ade80;"><i class="fa-solid fa-check" style="margin-right:4px;"></i>Restaurado (${result.api})</span>`;
+                  }
+                } else if (badgeEl) {
+                  badgeEl.innerHTML = `<span style="color:#ff5c5c;"><i class="fa-solid fa-xmark" style="margin-right:4px;"></i>Falhou</span>`;
+                }
+              } catch (_) {
+                if (badgeEl) {
+                  badgeEl.innerHTML = `<span style="color:#ff5c5c;"><i class="fa-solid fa-xmark" style="margin-right:4px;"></i>Erro</span>`;
+                }
+              }
+            }
+
+            progressSummary.style.color = restoredCount > 0 ? "#4ade80" : "#fbbf24";
+            progressSummary.textContent = `Concluído: ${restoredCount} de ${selected.length} jogo(s) restaurado(s) com sucesso!`;
+
+            if (restoredCount > 0) {
+              restoreBtn.style.pointerEvents = "auto";
+              restoreBtn.style.opacity = "1";
+              restoreBtn.innerHTML =
+                '<i class="fa-solid fa-rotate-right" style="margin-right:6px;"></i><span>Reiniciar Steam</span>';
+              restoreBtn.onclick = function (ev) {
+                ev.preventDefault();
+                overlay.remove();
+                askRestartConfirmation();
+              };
+            } else {
+              restoreBtn.style.display = "none";
+            }
+          };
+        })
+        .catch(function (err) {
+          listWrap.innerHTML =
+            `<div style="text-align:center;padding:22px;color:#ff5c5c;">Erro ao escanear biblioteca: ${String(err)}</div>`;
+        });
+    });
+  }
+
   function showSettingsPopup() {
     if (
       document.querySelector(".luatools-settings-overlay") ||
@@ -1827,6 +2153,7 @@
 
         // One line saying what each action does, so nothing has to be guessed
         const ACTION_HINTS = {
+          "lt-settings-verify-games": "Reinstala os manifests dos jogos baixados sem licença",
           "lt-settings-check": "Baixa e instala a versão mais nova do plugin",
           "lt-settings-fetch-apis": "Atualiza a lista de fontes do plugin",
           "lt-settings-restart-steam": "Fecha e abre a Steam para aplicar mudanças",
@@ -1932,6 +2259,14 @@
         );
         if (isGamePage) cardGrid.appendChild(fixesMenuBtn);
 
+        const verifyGamesBtn = createCardButton(
+          "lt-settings-verify-games",
+          "menu.verifyInstalledGames",
+          "Verificar Jogos Instalados",
+          "fa-shield-halved",
+        );
+        cardGrid.appendChild(verifyGamesBtn);
+
         const checkBtn = createCardButton(
           "lt-settings-check",
           "menu.checkForUpdates",
@@ -1974,6 +2309,16 @@
           }
         }, 150);
 
+        if (verifyGamesBtn) {
+          verifyGamesBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            try {
+              overlay.remove();
+            } catch (_) {}
+            showVerifyInstalledGamesModal();
+          });
+        }
+
         if (checkBtn) {
           checkBtn.addEventListener("click", function (e) {
             e.preventDefault();
@@ -2011,7 +2356,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.4\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.5\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5925,7 +6270,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.4";
+      heroTitle.textContent = "ManifestAdvTools v8.4.5";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -8341,6 +8686,7 @@ function addLuaToolsButton() {
                 (st.status === "downloading" ||
                   st.status === "processing" ||
                   st.status === "installing" ||
+                  st.status === "extracting" ||
                   st.status === "done") &&
                 st.currentApi &&
                 !successfulApi
@@ -8467,7 +8813,8 @@ function addLuaToolsButton() {
             } else if (
               (st.status === "downloading" ||
                 st.status === "processing" ||
-                st.status === "installing" || state.status === "extracting") &&
+                st.status === "installing" ||
+                st.status === "extracting") &&
               title
             ) {
               title.textContent = t("common.appName", "ManifestAdvTools");
@@ -8490,7 +8837,7 @@ function addLuaToolsButton() {
               if (st.status === "processing")
                 status.innerHTML =
                   gearIcon + "<span>" + lt("Processing package…") + "</span>";
-              if (st.status === "installing" || state.status === "extracting")
+              if (st.status === "installing" || st.status === "extracting")
                 status.innerHTML =
                   gearIcon + "<span>" + lt("Installing…") + "</span>";
               if (st.status === "checking content")
@@ -8503,7 +8850,7 @@ function addLuaToolsButton() {
                   "</span>";
             }
             if (
-              ["downloading", "processing", "installing"].includes(st.status)
+              ["downloading", "processing", "installing", "extracting"].includes(st.status)
             ) {
               // reveal progress UI (if overlay visible)
               if (wrap && wrap.style.display === "none")
