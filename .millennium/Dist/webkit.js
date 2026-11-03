@@ -1379,6 +1379,17 @@
         /* "Add via ADV Tools" button in Steam store page */
         /* Store page buttons keep Steam's native button look (they sit next to
            "Central da Comunidade"); only a small theme-coloured icon marks them */
+        /* Long source lists scroll inside the dialog instead of running off screen.
+           Inline cssText on the list gets reset while downloading, so this lives here */
+        .luatools-overlay .luatools-api-list {
+          max-height: min(46vh, 440px) !important;
+          overflow-y: auto !important;
+          overscroll-behavior: contain;
+          padding-right: 6px;
+        }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar { width: 8px; }
+        .luatools-overlay .luatools-api-list::-webkit-scrollbar-thumb { background: rgba(${colors.rgbString}, 0.45); border-radius: 4px; }
+
         .lt-store-ico {
           margin-right: 7px;
           font-size: 0.9em;
@@ -2387,7 +2398,7 @@
 
     const modal = document.createElement("div");
     const colors = getThemeColors();
-    modal.style.cssText = `background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:520px;padding:28px 32px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
+    modal.style.cssText = `background:${colors.modalBg};color:${colors.text};border:1px solid ${colors.border};border-radius:16px;width:520px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;padding:28px 32px;box-shadow:0 24px 80px rgba(0,0,0,.65), 0 0 0 1px ${colors.shadowRgba};animation:slideUp 0.12s ease-out;`;
 
     const title = document.createElement("div");
     const titleColors = getThemeColors();
