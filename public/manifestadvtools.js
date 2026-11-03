@@ -1963,7 +1963,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.2.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.3.1\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5876,7 +5876,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.2.0";
+      heroTitle.textContent = "ManifestAdvTools v8.3.1";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -7093,6 +7093,16 @@ function findStoreHeaderContainer() {
         '#store_header_cart_btn, #wishlist_link, a[href*="/cart"], a[href*="/wishlist"]',
       );
       if (anchor && anchor.parentElement) return anchor.parentElement;
+    }
+
+    // Current store nav (Explorar ... Buscar na loja ... Lista de desejos) has
+    // no stable id: use the wishlist link that sits in the top bar.
+    const wishlistLinks = document.querySelectorAll('a[href*="/wishlist"]');
+    for (let i = 0; i < wishlistLinks.length; i++) {
+      const rect = wishlistLinks[i].getBoundingClientRect();
+      if (rect.width > 0 && rect.top >= 0 && rect.top < 250 && wishlistLinks[i].parentElement) {
+        return wishlistLinks[i].parentElement;
+      }
     }
 
     // addLuaToolsButton runs on load, at 1s and 3s: give the header a few
