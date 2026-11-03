@@ -69,6 +69,43 @@ function Get-LatestReleaseUrl {
     return $null
 }
 
+# O plugin nao depende so da release: a branch main sempre tem o zip mais
+# novo. Compara a versao do plugin.json da main com a tag da ultima release
+# e baixa primeiro a mais nova; a outra fica de reserva.
+function Get-NewestPluginUrls {
+    $repo = "Adv3ntur3sBr/ManifestAdvTools"
+    $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $mainZip = "https://raw.githubusercontent.com/$repo/main/ManifestAdvTools.zip?t=$stamp"
+    $mainVer = $null
+    $relVer = $null
+    $relUrl = $null
+
+    $wc = New-Object System.Net.WebClient
+    $wc.Headers.Add("User-Agent", "ManifestAdvTools-Installer/1.0")
+    try {
+        $pj = $wc.DownloadString("https://raw.githubusercontent.com/$repo/main/plugin.json?t=$stamp") | ConvertFrom-Json
+        $mainVer = [version]$pj.version
+    } catch {
+        Write-Warn "  Nao foi possivel ler a versao da branch main ($_ )."
+    }
+    try {
+        $wc.Headers.Add("Accept", "application/vnd.github+json")
+        $rel = $wc.DownloadString("https://api.github.com/repos/$repo/releases/latest") | ConvertFrom-Json
+        $relVer = [version]($rel.tag_name -replace '^[^\d]*', '')
+        $asset = $rel.assets | Where-Object { $_.name -match '^ManifestAdvTools.*\.zip$' } | Select-Object -First 1
+        if ($asset) { $relUrl = $asset.browser_download_url }
+    } catch {
+        Write-Warn "  API GitHub indisponivel para releases ($_ )."
+    }
+
+    if ($relUrl -and $relVer -and (-not $mainVer -or $relVer -gt $mainVer)) {
+        Write-Step "  $repo versao mais recente: v$relVer (release)"
+        return @($relUrl, $mainZip)
+    }
+    Write-Step "  $repo versao mais recente: v$mainVer (branch main)"
+    return @($mainZip, $relUrl) | Where-Object { $_ }
+}
+
 function Download-And-Extract {
     param(
         [string[]]$Urls,
@@ -190,10 +227,7 @@ $MillLatestUrl = Get-LatestReleaseUrl `
     -AssetPattern "windows.*x86_64.*\.zip|millennium.*windows.*\.zip" `
     -Fallback "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/millennium.zip"
 
-$PluginLatestUrl = Get-LatestReleaseUrl `
-    -Repo "Adv3ntur3sBr/ManifestAdvTools" `
-    -AssetPattern "ManifestAdvTools.*\.zip" `
-    -Fallback "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/ManifestAdvTools.zip"
+$PluginUrls = Get-NewestPluginUrls
 
 Write-Host ""
 
@@ -242,10 +276,6 @@ if (Test-Path $DestPlugin) {
     Remove-Item -Path $DestPlugin -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-$PluginUrls = @(
-    $PluginLatestUrl,
-    "https://github.com/Adv3ntur3sBr/ManifestAdvTools/raw/main/ManifestAdvTools.zip"
-) | Where-Object { $_ }
 
 try {
     Download-And-Extract -Urls $PluginUrls -DestFolder $DestPlugin -Name "ManifestAdvTools"
