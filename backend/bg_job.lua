@@ -371,9 +371,10 @@ function bg_job.launch(opts)
     else
         local sh_path = fs.join(paths.get_plugin_dir(), "backend", "scripts", "downloader.sh")
         m_utils.exec("chmod +x " .. sh_quote(sh_path))
-        local cmd = string.format("nohup bash %s %s %s %s %s %s %s >/dev/null 2>&1 &",
-            sh_quote(sh_path), sh_quote(opts.url), sh_quote(f.zip), sh_quote(extract_dir),
-            sh_quote(f.state), sh_quote(list_file), sh_quote(f.pid))
+        local cmd = string.format("nohup bash %s %s %s %s %s %s %s %s %s %s >/dev/null 2>&1 &",
+            sh_quote(sh_path), sh_quote(opts.url or ""), sh_quote(f.zip), sh_quote(extract_dir),
+            sh_quote(f.state), sh_quote(list_file), sh_quote(f.pid),
+            sh_quote(depot_cache), sh_quote(target_lua), sh_quote(appid_str))
         m_utils.exec(cmd)
     end
     logger.log("bg_job: launched '" .. opts.id .. "' -> " .. tostring(opts.url))

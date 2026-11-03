@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="index.css?v=9.1.0">
 </head>
-<body data-version="8.4.9" data-repo="Adv3ntur3sBr/ManifestAdvTools">
+<body data-version="8.5.0" data-repo="Adv3ntur3sBr/ManifestAdvTools">
   <a href="#main" class="skip-link">Pular para o conteúdo</a>
   <div class="vignette" aria-hidden="true"></div>
 
@@ -27,7 +27,7 @@
       <a href="#top" class="brand" aria-label="ManifestAdvTools — início">
         <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-plus"></i></span>
         <span class="brand-name">ManifestAdvTools</span>
-        <span class="brand-ver" data-version-label>v8.4.9</span>
+        <span class="brand-ver" data-version-label>v8.5.0</span>
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="navLinks">
         <i class="fa-solid fa-bars"></i>
@@ -59,12 +59,24 @@
 
           <div class="cmd" id="install">
             <div class="cmd-bar">
-              <span class="cmd-label"><i class="fa-solid fa-terminal"></i> PowerShell · instalação em 1 comando</span>
+              <span class="cmd-label"><i class="fa-brands fa-windows"></i> Windows · PowerShell · instalação em 1 comando</span>
             </div>
             <div class="cmd-line">
               <code id="installCommand"><span class="cmd-prompt" aria-hidden="true">PS&gt;</span> <span id="installCommandText">irm "https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/install-plugin.ps1" | iex</span></code>
-              <button id="copyBtn" class="copy-btn" type="button" data-copy="installCommandText" title="Copiar comando">
+              <button id="copyBtn" class="copy-btn" type="button" data-copy="installCommandText" title="Copiar comando Windows">
                 <i class="fa-regular fa-clone" id="copyIcon"></i><span id="copyText">Copiar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="cmd" id="install-linux" style="margin-top: 12px;">
+            <div class="cmd-bar">
+              <span class="cmd-label"><i class="fa-brands fa-linux"></i> Linux / SteamOS (Steam Deck) · Bash · instalação em 1 comando</span>
+            </div>
+            <div class="cmd-line">
+              <code id="installLinuxCommand"><span class="cmd-prompt" aria-hidden="true">$</span> <span id="installLinuxCommandText">curl -fsSL "https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/install.sh" | bash</span></code>
+              <button id="copyLinuxBtn" class="copy-btn" type="button" data-copy="installLinuxCommandText" title="Copiar comando Linux">
+                <i class="fa-regular fa-clone"></i><span>Copiar</span>
               </button>
             </div>
           </div>
@@ -82,7 +94,7 @@
         <aside class="console reveal" aria-label="Prévia do painel do plugin">
           <div class="console-top">
             <span class="console-title"><span class="brand-mark sm" aria-hidden="true"><i class="fa-solid fa-plus"></i></span> ManifestAdvTools</span>
-            <span class="console-ver" data-version-label>v8.4.9</span>
+            <span class="console-ver" data-version-label>v8.5.0</span>
           </div>
           <div class="console-row">
             <span class="console-key">AppID</span>
@@ -242,7 +254,7 @@
           </div>
 
           <div class="readout-grid">
-            <div class="ro"><span class="ro-k">Versão do site</span><span class="ro-v" id="currentVerDisplay" data-version-label>v8.4.9</span></div>
+            <div class="ro"><span class="ro-k">Versão do site</span><span class="ro-v" id="currentVerDisplay" data-version-label>v8.5.0</span></div>
             <div class="ro"><span class="ro-k">Mais recente</span><span class="ro-v steel" id="latestVerDisplay">—</span></div>
             <div class="ro"><span class="ro-k">Status</span><span class="status" id="statusBadge" role="status" aria-live="polite"><i class="fa-solid fa-hourglass-half"></i> Pronto</span></div>
           </div>
@@ -271,11 +283,22 @@
         </div>
         <div class="cmd cmd-danger reveal">
           <div class="cmd-bar">
-            <span class="cmd-label"><i class="fa-solid fa-trash-can"></i> PowerShell · desinstalar e restaurar a Steam</span>
+            <span class="cmd-label"><i class="fa-brands fa-windows"></i> Windows (PowerShell) · desinstalar e restaurar a Steam</span>
           </div>
           <div class="cmd-line">
             <code><span class="cmd-prompt" aria-hidden="true">PS&gt;</span> <span id="uninstallCommandText">powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/uninstall.ps1 | iex"</span></code>
-            <button class="copy-btn" type="button" data-copy="uninstallCommandText" title="Copiar comando de desinstalação">
+            <button class="copy-btn" type="button" data-copy="uninstallCommandText" title="Copiar comando de desinstalação Windows">
+              <i class="fa-regular fa-clone"></i><span>Copiar</span>
+            </button>
+          </div>
+        </div>
+        <div class="cmd cmd-danger reveal" style="margin-top: 12px;">
+          <div class="cmd-bar">
+            <span class="cmd-label"><i class="fa-brands fa-linux"></i> Linux / SteamOS (Bash) · desinstalar e restaurar a Steam</span>
+          </div>
+          <div class="cmd-line">
+            <code><span class="cmd-prompt" aria-hidden="true">$</span> <span id="uninstallLinuxCommandText">curl -fsSL "https://raw.githubusercontent.com/Adv3ntur3sBr/ManifestAdvTools/main/uninstall.sh" | bash</span></code>
+            <button class="copy-btn" type="button" data-copy="uninstallLinuxCommandText" title="Copiar comando de desinstalação Linux">
               <i class="fa-regular fa-clone"></i><span>Copiar</span>
             </button>
           </div>

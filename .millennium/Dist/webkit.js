@@ -2379,7 +2379,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.9\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.5.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -6315,7 +6315,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.9";
+      heroTitle.textContent = "ManifestAdvTools v8.5.0";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";

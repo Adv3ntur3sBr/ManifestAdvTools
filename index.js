@@ -45,9 +45,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Adapt install command to current domain if hosted on Vercel or custom domain
   const installCmdText = $("installCommandText");
+  const installLinuxCmdText = $("installLinuxCommandText");
   const host = window.location.hostname;
   if (installCmdText && window.location.protocol.startsWith("http") && host && !["localhost", "127.0.0.1"].includes(host)) {
     installCmdText.textContent = `irm "${window.location.origin}/install-plugin.ps1" | iex`;
+    if (installLinuxCmdText) installLinuxCmdText.textContent = `curl -fsSL "${window.location.origin}/install.sh" | bash`;
   }
 
   // Copy command to clipboard (with fallback for non-secure contexts / file://)
@@ -80,7 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.classList.add("copied");
         if (icon) icon.className = "fa-solid fa-check";
         if (label) label.textContent = "Copiado!";
-        showToast("Comando copiado! Cole no PowerShell e pressione Enter.");
+        const isLinux = btn.dataset.copy && btn.dataset.copy.toLowerCase().includes("linux");
+        showToast(isLinux ? "Comando copiado! Cole no terminal Linux e pressione Enter." : "Comando copiado! Cole no PowerShell e pressione Enter.");
         setTimeout(() => {
           btn.classList.remove("copied");
           if (icon) icon.className = "fa-regular fa-clone";
