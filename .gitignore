@@ -5,3 +5,5 @@
 # Temp download caches
 backend/temp_dl/
 *.tmp
+push.err
+*.err
