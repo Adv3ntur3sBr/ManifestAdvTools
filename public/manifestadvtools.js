@@ -1988,12 +1988,15 @@
                 try {
                   const payload =
                     typeof res === "string" ? JSON.parse(res) : res;
-                  const msg =
-                    payload && payload.message
-                      ? String(payload.message)
-                      : lt("No updates available.");
+                  const detail = payload && (payload.message || payload.error);
+                  const msg = detail ? String(detail) : lt("No updates available.");
                   ShowLuaToolsAlert("ManifestAdvTools", msg);
                 } catch (_) {}
+              }).catch(function () {
+                ShowLuaToolsAlert(
+                  "ManifestAdvTools",
+                  t("update.checkFailed", "Não foi possível verificar atualizações agora. Tente de novo em alguns minutos."),
+                );
               });
             } catch (_) {}
           });
@@ -2009,7 +2012,7 @@
             } catch (_) {}
             ShowLuaToolsAlert(
               "ManifestAdvTools",
-              "ManifestAdvTools v8.4.0\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
+              "ManifestAdvTools v8.4.1\n\nGerenciador Moderno e Avançado de Jogos e Manifestos para Steam.\nDesenvolvido para máxima performance e integração direta sem telas CMD.\n\n• Fontes públicas de manifestos atualizadas\n• Suporte nativo a OnlineFix e bypasses\n• Gerenciamento completo de fixes com desinstalação segura\n• Reinício integrado com 1 clique"
             );
           });
         }
@@ -5923,7 +5926,7 @@
       heroInfo.style.cssText = "flex:1;";
       const heroTitle = document.createElement("div");
       heroTitle.style.cssText = `font-size:22px;font-weight:700;background:${c.gradientLight};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;`;
-      heroTitle.textContent = "ManifestAdvTools v8.4.0";
+      heroTitle.textContent = "ManifestAdvTools v8.4.1";
       const heroSub = document.createElement("div");
       heroSub.style.cssText = `font-size:13px;color:${c.textSecondary};line-height:1.5;`;
       heroSub.textContent = "Gerenciador Moderno e Avançado de Jogos, Manifestos e Fixes para Steam.";
@@ -5987,7 +5990,10 @@
       actGrid.appendChild(createActionButton("Buscar Atualizações", "fa-cloud-arrow-down", function() {
         Millennium.callServerMethod("ManifestAdvTools", "CheckForUpdatesNow", {}).then(function(res) {
           const p = typeof res === "string" ? JSON.parse(res) : res;
-          ShowLuaToolsAlert("ManifestAdvTools", p && p.message ? p.message : "Nenhuma atualização disponível.");
+          const detail = p && (p.message || p.error);
+          ShowLuaToolsAlert("ManifestAdvTools", detail ? String(detail) : "Nenhuma atualização disponível.");
+        }).catch(function() {
+          ShowLuaToolsAlert("ManifestAdvTools", t("update.checkFailed", "Não foi possível verificar atualizações agora. Tente de novo em alguns minutos."));
         });
       }));
 

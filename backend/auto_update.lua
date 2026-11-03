@@ -9,78 +9,105 @@ local steam_utils = require("steam_utils")
 
 local auto_update = {}
 
+-- Compare version strings component by component (can't use <= on tables in Lua)
+local function compare_versions(a, b)
+    local ta = utils.parse_version(a)
+    local tb = utils.parse_version(b)
+    local len = math.max(#ta, #tb)
+    for i = 1, len do
+        local ai = ta[i] or 0
+        local bi = tb[i] or 0
+        if ai < bi then return -1
+        elseif ai > bi then return 1
+        end
+    end
+    return 0
+end
+
+local function fail(msg)
+    return { success = false, error = msg, message = msg }
+end
+
+--- Latest GitHub release: version string and zip asset URL (nil, nil on failure).
+local function latest_release(owner, repo, asset_name, tag, tag_prefix)
+    local endpoint = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/releases/latest"
+    if tag ~= "" then
+        endpoint = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/releases/tags/" .. tag
+    end
+    local resp = http_client.get(endpoint, {
+        headers = {
+            ["Accept"] = "application/vnd.github+json",
+            ["User-Agent"] = "ManifestAdvTools-Updater"
+        },
+        timeout = 10
+    })
+    if not (resp and resp.status == 200 and resp.body) then
+        logger.warn("auto_update: releases API returned " .. tostring(resp and resp.status))
+        return nil, nil
+    end
+
+    local data = utils.decode_json(resp.body)
+    local tag_name = data.tag_name or ""
+    local version = (tag_name ~= "" and tag_name) or data.name or ""
+    if tag_prefix ~= "" and version:sub(1, #tag_prefix) == tag_prefix then
+        version = version:sub(#tag_prefix + 1)
+    end
+    version = version:gsub("^[vV]", "")
+    if version == "" then return nil, nil end
+
+    for _, asset in ipairs(data.assets or {}) do
+        if asset.name == asset_name then
+            return version, asset.browser_download_url
+        end
+    end
+    if tag_name ~= "" then
+        return version, "https://github.com/" .. owner .. "/" .. repo .. "/releases/download/" .. tag_name .. "/" .. asset_name
+    end
+    return nil, nil
+end
+
+--- Version in plugin.json on the main branch (nil on failure).
+local function main_branch_version(owner, repo)
+    local url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/main/plugin.json?t=" .. os.time()
+    local resp = http_client.get(url, {
+        headers = { ["User-Agent"] = "ManifestAdvTools-Updater" },
+        timeout = 10
+    })
+    if resp and resp.status == 200 and resp.body then
+        local data = utils.decode_json(resp.body)
+        if data.version then return tostring(data.version) end
+    end
+    logger.warn("auto_update: could not read main plugin.json (" .. tostring(resp and resp.status) .. ")")
+    return nil
+end
+
+-- Releases lag behind main (they sat at v8.1.1 while main moved on), so
+-- check both and take the newer one, same as install-plugin.ps1.
 function auto_update.check_for_updates_now()
-    local cfg_path = paths.backend_path(config.UPDATE_CONFIG_FILE)
-    local cfg = utils.read_json(cfg_path)
-    
-    local latest_version = ""
-    local zip_url = ""
-    
-    local gh_cfg = cfg.github
-    if gh_cfg then
-        local owner = gh_cfg.owner or ""
-        local repo = gh_cfg.repo or ""
-        local asset_name = gh_cfg.asset_name or "ltsteamplugin.zip"
-        local tag = gh_cfg.tag or ""
-        local tag_prefix = gh_cfg.tag_prefix or ""
-        
-        local endpoint = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/releases/latest"
-        if tag ~= "" then
-            endpoint = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/releases/tags/" .. tag
-        end
-        
-        local resp = http_client.get(endpoint, {
-            headers = {
-                ["Accept"] = "application/vnd.github+json",
-                ["User-Agent"] = "ManifestAdvTools-Updater"
-            },
-            timeout = 10
-        })
-        if resp and resp.status == 200 and resp.body then
-            local data = utils.decode_json(resp.body)
-            local tag_name = data.tag_name or ""
-            latest_version = (tag_name ~= "" and tag_name) or data.name or ""
-            if tag_prefix ~= "" and latest_version:sub(1, #tag_prefix) == tag_prefix then
-                latest_version = latest_version:sub(#tag_prefix + 1)
-            end
-            
-            for _, asset in ipairs(data.assets or {}) do
-                if asset.name == asset_name then
-                    zip_url = asset.browser_download_url
-                    break
-                end
-            end
-            if zip_url == "" and tag_name ~= "" then
-                zip_url = "https://github.com/Adv3ntur3sBr/ManifestAdvTools/releases/download/" .. tag_name .. "/" .. asset_name
-            end
-        end
+    local cfg = utils.read_json(paths.backend_path(config.UPDATE_CONFIG_FILE))
+    local gh_cfg = cfg.github or {}
+    local owner = gh_cfg.owner or "Adv3ntur3sBr"
+    local repo = gh_cfg.repo or "ManifestAdvTools"
+    local asset_name = gh_cfg.asset_name or "ManifestAdvTools.zip"
+
+    local rel_version, rel_zip = latest_release(owner, repo, asset_name, gh_cfg.tag or "", gh_cfg.tag_prefix or "")
+    local main_version = main_branch_version(owner, repo)
+
+    local latest_version, zip_url
+    if rel_version and (not main_version or compare_versions(rel_version, main_version) > 0) then
+        latest_version, zip_url = rel_version, rel_zip
+    elseif main_version then
+        latest_version = main_version
+        zip_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/main/" .. asset_name .. "?t=" .. os.time()
+    else
+        return fail("Não foi possível verificar atualizações agora (GitHub fora do ar ou limite de consultas atingido). Tente de novo em alguns minutos.")
     end
-    
-    if latest_version == "" or zip_url == "" then
-        return { success = false, error = "Manifest missing version or zip_url" }
-    end
-    
+
     local current_version = utils.get_plugin_version()
-
-    -- Compare version tables component by component (can't use <= on tables in Lua)
-    local function compare_versions(a, b)
-        local ta = utils.parse_version(a)
-        local tb = utils.parse_version(b)
-        local len = math.max(#ta, #tb)
-        for i = 1, len do
-            local ai = ta[i] or 0
-            local bi = tb[i] or 0
-            if ai < bi then return -1
-            elseif ai > bi then return 1
-            end
-        end
-        return 0
-    end
-
     if compare_versions(latest_version, current_version) <= 0 then
-        return { success = true, message = "ManifestAdvTools já está na versão mais recente (" .. current_version .. ")" }
+        return { success = true, message = "ManifestAdvTools já está na versão mais recente (" .. current_version .. ")." }
     end
-    
+
     local pending_zip = paths.backend_path(config.UPDATE_PENDING_ZIP)
     local plugin_dir = paths.get_plugin_dir()
 
@@ -103,14 +130,13 @@ function auto_update.check_for_updates_now()
     m_utils.exec(download_cmd)
     if not fs.exists(pending_zip) then
         logger.warn("auto_update: download failed: " .. zip_url)
-        return { success = false, error = "Falha ao baixar a atualização " .. latest_version .. ". Tente de novo mais tarde." }
+        return fail("Falha ao baixar a atualização " .. latest_version .. ". Tente de novo mais tarde.")
     end
 
     m_utils.exec(extract_cmd)
     fs.remove(pending_zip)
-    
-    local msg = "ManifestAdvTools atualizado com sucesso para " .. latest_version .. "! Reinicie o Steam."
-    return { success = true, message = msg }
+
+    return { success = true, message = "ManifestAdvTools atualizado de " .. current_version .. " para " .. latest_version .. "! Reinicie a Steam para aplicar." }
 end
 
 -- The backend runs inside Steam, so anything it spawns dies with Steam's
