@@ -113,14 +113,38 @@ function auto_update.check_for_updates_now()
     return { success = true, message = msg }
 end
 
+-- The backend runs inside Steam, so anything it spawns dies with Steam's
+-- process tree when restart_steam.cmd kills steam.exe — Steam closed but
+-- never came back. Win32_Process.Create (WMI) starts the script outside
+-- that tree; Start-Process is only the fallback.
+local RESTART_LAUNCHER_PS = [==[
+$ErrorActionPreference = 'Stop'
+try {
+    $si = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 }
+    $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+        CommandLine = 'cmd.exe /c "' + $script + '"'
+        ProcessStartupInformation = $si
+    }
+    if ($r.ReturnValue -ne 0) { throw "Win32_Process.Create returned $($r.ReturnValue)" }
+} catch {
+    Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', ('"' + $script + '"') -WindowStyle Hidden
+}
+]==]
+
 function auto_update.restart_steam()
     local is_windows = m_utils.getenv("OS") == "Windows_NT"
     if is_windows then
         local script_path = paths.backend_path("restart_steam.cmd")
         if fs.exists(script_path) then
             local win_path = script_path:gsub("/", "\\")
-            -- Launch in a detached console/process so it survives Steam termination
-            m_utils.exec('cmd.exe /c start "" "' .. win_path .. '"')
+            local launcher = fs.join(utils.ensure_temp_download_dir(), "restart_launcher.ps1")
+            -- BOM so Windows PowerShell 5 reads non-ASCII paths (user names with accents) correctly
+            local quoted = win_path:gsub("'", "''")
+            local body = "\239\187\191$script = '" .. quoted .. "'\r\n"
+                .. RESTART_LAUNCHER_PS:gsub("\r?\n", "\r\n")
+            m_utils.write_file(launcher, body)
+            logger.log("auto_update: restarting Steam via " .. win_path)
+            m_utils.exec('powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "' .. launcher .. '"')
             return true
         end
     else
