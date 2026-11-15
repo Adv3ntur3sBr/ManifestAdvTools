@@ -131,6 +131,12 @@ function downloads._finalize_install_lua(appid, extract_dir, dest_path, api_name
                     if line:match("^%s*setManifestid%(") then
                         line = line:gsub("^(%s*)(setManifestid)", "%1-- %2")
                     end
+                    line = line:gsub('addappid%s*%(%s*(%d+)%s*,%s*0%s*,%s*"([0-9a-fA-F]+)"%s*%)', function(id, key)
+                        if #key == 64 then
+                            return 'addappid(' .. id .. ', 1, "' .. key .. '")'
+                        end
+                        return 'addappid(' .. id .. ', 0, "' .. key .. '")'
+                    end)
                     table.insert(new_lines, line)
                 end
                 if new_lines[#new_lines] == "" then table.remove(new_lines) end

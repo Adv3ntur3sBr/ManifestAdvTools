@@ -88,6 +88,7 @@ local function on_load()
         api_manifest.store_last_message(upd_msg)
     end
 
+    pcall(steam_utils.repair_stplugin_lua_keys)
     pcall(copy_webkit_files)
     pcall(inject_webkit_files)
 

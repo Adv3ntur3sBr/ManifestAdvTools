@@ -143,7 +143,9 @@ if [ -n "$DEPOT_CACHE" ] || [ -n "$TARGET_LUA" ]; then
             chosen_lua=$(find "$EXTRACT_DIR" -type f -name "*.lua" | head -n 1)
         fi
         if [ -n "$chosen_lua" ] && [ -f "$chosen_lua" ]; then
-            sed -E 's/^([[:space:]]*)(setManifestid\()/\1-- \2/' "$chosen_lua" > "$TARGET_LUA"
+            sed -E -e 's/^([[:space:]]*)(setManifestid\()/\1-- \2/' \
+                   -e 's/addappid\(([0-9]+),[[:space:]]*0,[[:space:]]*"([0-9a-fA-F]{64})"\)/addappid(\1, 1, "\2")/g' \
+                   "$chosen_lua" > "$TARGET_LUA"
         fi
 
         # On Linux, also register depot decryption keys into Steam's config/config.vdf and SLSsteam if present
@@ -195,3 +197,4 @@ fi
 
 rm -f "$DEST_ZIP" 2>/dev/null || true
 set_state "extracted" "" 100 100
+

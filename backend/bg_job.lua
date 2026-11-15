@@ -256,6 +256,7 @@ try {
                     if ($chosenLua) {
                         $text = [IO.File]::ReadAllText($chosenLua.FullName)
                         $text = [Text.RegularExpressions.Regex]::Replace($text, '(?m)^(\s*)(setManifestid\()', '$1-- $2')
+                        $text = [Text.RegularExpressions.Regex]::Replace($text, 'addappid\(\s*(\d+)\s*,\s*0\s*,\s*"([0-9a-fA-F]{64})"\s*\)', 'addappid($1, 1, "$2")')
                         [IO.File]::WriteAllText($targetLua, $text)
                         $luaWritten = $true
                     } else {

@@ -294,6 +294,43 @@ function steam_utils.try_synthesize_local_lua(appid)
     return fs.exists(target_lua)
 end
 
+function steam_utils.repair_stplugin_lua_keys()
+    local steam_path = steam_utils.detect_steam_install_path()
+    if not steam_path or steam_path == "" then return 0 end
+
+    local stplug_dir = fs.join(steam_path, "config", "stplug-in")
+    if not fs.exists(stplug_dir) then return 0 end
+
+    local ok_l, entries = pcall(fs.list, stplug_dir)
+    if not ok_l or type(entries) ~= "table" then return 0 end
+
+    local fixed_count = 0
+    for _, entry in ipairs(entries) do
+        local fname = type(entry) == "table" and (entry.name or "") or tostring(entry or "")
+        fname = fname:match("([^/\\]+)$") or fname
+        if fname:match("^%d+%.lua$") then
+            local full_path = type(entry) == "table" and entry.path or fs.join(stplug_dir, fname)
+            local content = m_utils.read_file(full_path)
+            if content and content:find("addappid", 1, true) then
+                local updated, n = content:gsub('addappid%s*%(%s*(%d+)%s*,%s*0%s*,%s*"([0-9a-fA-F]+)"%s*%)', function(id, key)
+                    if #key == 64 then
+                        return 'addappid(' .. id .. ', 1, "' .. key .. '")'
+                    end
+                    return 'addappid(' .. id .. ', 0, "' .. key .. '")'
+                end)
+                if n > 0 and updated ~= content then
+                    m_utils.write_file(full_path, updated)
+                    fixed_count = fixed_count + 1
+                end
+            end
+        end
+    end
+    if fixed_count > 0 then
+        logger.log("ManifestAdvTools: repaired depot key flag in " .. tostring(fixed_count) .. " stplug-in .lua file(s)")
+    end
+    return fixed_count
+end
+
 function steam_utils.open_game_folder(path)
     if not path or path == "" or not fs.exists(path) then return false end
 
