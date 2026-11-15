@@ -259,6 +259,33 @@ try {
                         $text = [Text.RegularExpressions.Regex]::Replace($text, 'addappid\(\s*(\d+)\s*,\s*0\s*,\s*"([0-9a-fA-F]{64})"\s*\)', 'addappid($1, 1, "$2")')
                         [IO.File]::WriteAllText($targetLua, $text)
                         $luaWritten = $true
+
+                        # Also register DecryptionKeys in Steam's config/config.vdf as fallback
+                        try {
+                            $steamRoot = Split-Path (Split-Path (Split-Path $targetLua -Parent) -Parent) -Parent
+                            $cfgVdf = Join-Path $steamRoot 'config\config.vdf'
+                            if (Test-Path -LiteralPath $cfgVdf) {
+                                $vdfText = [IO.File]::ReadAllText($cfgVdf)
+                                $keyMatches = [Text.RegularExpressions.Regex]::Matches($text, 'addappid\(\s*(\d+)\s*,\s*\d+\s*,\s*"([0-9a-fA-F]{64})"\s*\)')
+                                $vdfModified = $false
+                                foreach ($km in $keyMatches) {
+                                    $dId = $km.Groups[1].Value
+                                    $dKey = $km.Groups[2].Value
+                                    if ($vdfText -notmatch ('"' + [regex]::Escape($dId) + '"\s*\{\s*"DecryptionKey"')) {
+                                        $depotsMatch = [Text.RegularExpressions.Regex]::Match($vdfText, '("depots"\s*\{)', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                                        if ($depotsMatch.Success) {
+                                            $entry = "`n`t`t`t`t`t`"$dId`"`n`t`t`t`t`t{`n`t`t`t`t`t`t`"DecryptionKey`"`t`t`"$dKey`"`n`t`t`t`t`t}"
+                                            $idx = $depotsMatch.Groups[1].Index + $depotsMatch.Groups[1].Length
+                                            $vdfText = $vdfText.Insert($idx, $entry)
+                                            $vdfModified = $true
+                                        }
+                                    }
+                                }
+                                if ($vdfModified) {
+                                    [IO.File]::WriteAllText($cfgVdf, $vdfText)
+                                }
+                            }
+                        } catch {}
                     } else {
                         $vdfFiles = @(Get-ChildItem -LiteralPath $ed -Recurse -File -Filter '*.vdf')
                         $depotKeys = @{}

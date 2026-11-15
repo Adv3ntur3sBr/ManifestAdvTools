@@ -88,7 +88,6 @@ local function on_load()
         api_manifest.store_last_message(upd_msg)
     end
 
-    pcall(steam_utils.repair_stplugin_lua_keys)
     pcall(copy_webkit_files)
     pcall(inject_webkit_files)
 
@@ -556,6 +555,7 @@ function GetGameInstallPath(appid)
 end
 
 function GetInstalledGamesForVerify(arg1, arg2)
+    pcall(steam_utils.repair_stplugin_lua_keys)
     local owned_json = ""
     if type(arg1) == "table" then
         owned_json = tostring(arg1.ownedAppsJson or arg1.owned_apps_json or "")
