@@ -12,6 +12,27 @@ local fixes = {}
 local INSTALLED_FIXES_FILE = paths.backend_path("data/installed_fixes.json")
 local IN_FLIGHT_FIXES = {}
 local UNFIX_STATES = {}
+local _FIXES_INDEX_CACHE = nil
+local _FIXES_INDEX_TS = 0
+local _FIXES_INDEX_TTL = 900
+
+function fixes.preload_index(force)
+    local now = os.time()
+    if not force and _FIXES_INDEX_CACHE and (now - _FIXES_INDEX_TS) < _FIXES_INDEX_TTL then
+        return _FIXES_INDEX_CACHE
+    end
+    local FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
+    local ok_h, resp = pcall(http_client.get, FIXES_INDEX_URL, { timeout = 4 })
+    if ok_h and resp and resp.status == 200 and resp.body then
+        local data = utils.decode_json(resp.body)
+        if type(data) == "table" then
+            _FIXES_INDEX_CACHE = data
+            _FIXES_INDEX_TS = now
+            return data
+        end
+    end
+    return _FIXES_INDEX_CACHE
+end
 
 local function _load_installed_fixes()
     if not fs.exists(INSTALLED_FIXES_FILE) then return {} end
@@ -38,37 +59,33 @@ function fixes.check_for_fixes(appid)
         onlineFix = { status = 0, available = false }
     }
 
-    local FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
-    local resp = http_client.get(FIXES_INDEX_URL, { timeout = 10 })
-    if resp and resp.status == 200 and resp.body then
-        local data = utils.decode_json(resp.body)
-        if type(data) == "table" then
-            local generic_url = "https://files.luatools.work/GameBypasses/" .. tostring(appid) .. ".zip"
-            local online_url  = "https://files.luatools.work/OnlineFix1/" .. tostring(appid) .. ".zip"
+    local data = fixes.preload_index(false)
+    if type(data) == "table" then
+        local generic_url = "https://files.luatools.work/GameBypasses/" .. tostring(appid) .. ".zip"
+        local online_url  = "https://files.luatools.work/OnlineFix1/" .. tostring(appid) .. ".zip"
 
-            local has_generic = false
-            for _, v in ipairs(data.genericFixes or {}) do
-                if tonumber(v) == appid then has_generic = true; break end
-            end
-            if has_generic then
-                result.genericFix.status = 200
-                result.genericFix.available = true
-                result.genericFix.url = generic_url
-            else
-                result.genericFix.status = 404
-            end
+        local has_generic = false
+        for _, v in ipairs(data.genericFixes or {}) do
+            if tonumber(v) == appid then has_generic = true; break end
+        end
+        if has_generic then
+            result.genericFix.status = 200
+            result.genericFix.available = true
+            result.genericFix.url = generic_url
+        else
+            result.genericFix.status = 404
+        end
 
-            local has_online = false
-            for _, v in ipairs(data.onlineFixes or {}) do
-                if tonumber(v) == appid then has_online = true; break end
-            end
-            if has_online then
-                result.onlineFix.status = 200
-                result.onlineFix.available = true
-                result.onlineFix.url = online_url
-            else
-                result.onlineFix.status = 404
-            end
+        local has_online = false
+        for _, v in ipairs(data.onlineFixes or {}) do
+            if tonumber(v) == appid then has_online = true; break end
+        end
+        if has_online then
+            result.onlineFix.status = 200
+            result.onlineFix.available = true
+            result.onlineFix.url = online_url
+        else
+            result.onlineFix.status = 404
         end
     end
 

@@ -95,6 +95,7 @@ local function on_load()
     if ok_a and res then
         logger.log("InitApis (boot) result: " .. tostring(res.message or ""))
     end
+    pcall(fixes.preload_index, false)
 
     millennium.ready()
 
