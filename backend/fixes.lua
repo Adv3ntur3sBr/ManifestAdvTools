@@ -16,15 +16,21 @@ local _FIXES_INDEX_CACHE = nil
 local _FIXES_INDEX_TS = 0
 local _FIXES_INDEX_TTL = 900
 
+-- The fixes index (index.luatools.work/fixes-index.json) is gone: it now
+-- 301-redirects to http://luatools.work, and requesting it crashed the plugin
+-- host with 0xC0000005, at startup and on every game page. Until there is a
+-- working index, report no fixes instead of making the request.
+local FIXES_INDEX_URL = nil
+
 function fixes.preload_index(force)
+    if not FIXES_INDEX_URL then return nil end
     local now = os.time()
-    -- Failed attempts are cached too, so a dead index is fetched at most once
+    -- Failed attempts are cached too, so a bad index is fetched at most once
     -- per TTL instead of on every game page
     if not force and _FIXES_INDEX_TS > 0 and (now - _FIXES_INDEX_TS) < _FIXES_INDEX_TTL then
         return _FIXES_INDEX_CACHE
     end
     _FIXES_INDEX_TS = now
-    local FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
     local ok_h, resp = pcall(http_client.get, FIXES_INDEX_URL, { timeout = 4 })
     if ok_h and resp and resp.status == 200 and resp.body then
         local data = utils.decode_json(resp.body)
