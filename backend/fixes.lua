@@ -18,16 +18,18 @@ local _FIXES_INDEX_TTL = 900
 
 function fixes.preload_index(force)
     local now = os.time()
-    if not force and _FIXES_INDEX_CACHE and (now - _FIXES_INDEX_TS) < _FIXES_INDEX_TTL then
+    -- Failed attempts are cached too, so a dead index is fetched at most once
+    -- per TTL instead of on every game page
+    if not force and _FIXES_INDEX_TS > 0 and (now - _FIXES_INDEX_TS) < _FIXES_INDEX_TTL then
         return _FIXES_INDEX_CACHE
     end
+    _FIXES_INDEX_TS = now
     local FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
     local ok_h, resp = pcall(http_client.get, FIXES_INDEX_URL, { timeout = 4 })
     if ok_h and resp and resp.status == 200 and resp.body then
         local data = utils.decode_json(resp.body)
         if type(data) == "table" then
             _FIXES_INDEX_CACHE = data
-            _FIXES_INDEX_TS = now
             return data
         end
     end

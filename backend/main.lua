@@ -95,7 +95,9 @@ local function on_load()
     if ok_a and res then
         logger.log("InitApis (boot) result: " .. tostring(res.message or ""))
     end
-    pcall(fixes.preload_index, false)
+    -- No network here: the fixes index URL now redirects to another host and
+    -- the request crashed the plugin (0xC0000005) two seconds after every start.
+    -- CheckForFixes loads it on demand instead.
 
     millennium.ready()
 
